@@ -13,12 +13,25 @@ exp=./exp
 
 type='train'
 
+lr=1.10-4
+epochs=60
+batch=32
+checkpoints=1
+checkpoints_occurence=10
+
 . local/parse_options.sh || exit 1;
 
 fps=25
 sampling=44100
 hop_length=1764
 wlen=256
+
+init_step=1
+sequence=150
+multiprocessing=True
+workers=4
+
+train_folder=${exp}/trained
 
 echo "============================================================"
 echo "                        Music2Dance"
@@ -38,8 +51,28 @@ fi
 echo "----- End-to-End stage"
 
 if [ ${stage} -eq 1 ]; then
-  echo "stage 1: whatever..."
+  echo "stage 1: making h5 data files..."
+  motion_audio_treatment.py -t ${type} \
+                            -f ${exp} || exit 1;
 
+fi
+echo "----- End-to-End stage"
+
+if [ ${stage} -eq 2 ]; then
+  echo "stage 2: Training network "
+  train_network.py -t ${type} \
+                   -f ${exp} \
+                   -o ${train_folder} \
+                   -v 1 \
+                   -lr ${lr} \
+                   -e ${epochs} \
+                   -b ${batch} \
+                   -c ${checkpoints} \
+                   -co ${checkpoints_occurence} \
+                   -is ${init_step} \
+                   -q ${sequence} \
+                   -m ${multiprocessing} \
+                   -w ${workers} || exit 1;
 fi
 echo "----- End-to-End stage"
 

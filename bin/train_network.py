@@ -29,26 +29,22 @@ def main():
     dataset = DataGenerator(path, args.batch, args.sequence, args.type, args.init_step, shuffle=True)
     batch_0 = dataset[0]
     input_shape = batch_0[0].shape[1:]
-    output_shape = batch_0[1].shape[2] #output_shape = batch_0[1].shape[1:]
+    output_shape = batch_0[1].shape[2]  # output_shape = batch_0[1].shape[1:]
     print('input shape: ', input_shape)
     print('output shape: ', output_shape)
 
     folder_models = os.path.join(args.out, 'models')
 
-    print("test 1 ")
     if not os.path.exists(folder_models):
         os.makedirs(folder_models)
 
-    print("test 2 ")
-
     model = convlstm(input_shape, output_shape, args.base_lr)
-
-    print("test 3 ")
 
     model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                   verbose=1,
                                   save_best_only=False,
                                   period=10)
+
     def lr_scheduler(epoch, lr):
         decay_rate = 0.90
         decay_step = 20
@@ -59,7 +55,7 @@ def main():
     callbacks_list = [model_saver,
                       TerminateOnNaN(),
                       LearningRateScheduler(lr_scheduler, verbose=1)]
-    print("test 4 ")
+
     history = model.fit_generator(dataset,
                                   epochs=args.epochs,
                                   use_multiprocessing=args.multiprocessing,
@@ -68,7 +64,7 @@ def main():
 
     plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
-    def plot_loss(hist, path):
+    def plot_loss(hist, save):
         # Plot training & validation loss values
         plt.plot(hist.history['loss'])
         plt.plot(hist.history['val_loss'])
@@ -76,7 +72,7 @@ def main():
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
         plt.legend(['Train', 'Test'], loc='upper left')
-        plt.savefig(os.path.join(path, 'loss_values.png'))
+        plt.savefig(os.path.join(save, 'loss_values.png'))
 
 
 if __name__ == '__main__':
