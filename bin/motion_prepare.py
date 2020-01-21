@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import os
 import logging
@@ -11,7 +12,8 @@ import sys
 module_utils = os.getcwd().replace('bin', 'utils')
 sys.path.append(module_utils)
 
-from motion_loader import output_loader
+from utils.motion_loader import output_loader
+
 
 def calculate_minmax(fileslist):
     logging.info('MinMax file not found...')
@@ -33,8 +35,8 @@ def calculate_minmax(fileslist):
         f.create_dataset('minmax', data=pos_minmax.T)
     return
 
-def main():
 
+def main():
     preprefix = os.path.join(args.save, 'data')
     prefix = os.path.join(preprefix, args.type)
     if not os.path.exists(args.save):
@@ -46,7 +48,7 @@ def main():
     configuration[args.type] = prefix
     for i in range(len(folders)):
         path = folders[i]
-        motion , start_position, end_position, pos_min, pos_max = output_loader(path)
+        motion, start_position, end_position, pos_min, pos_max = output_loader(path)
         h5file = '{}f{:03d}.h5'.format(os.path.join(prefix, args.type), i)
         list_path = np.string_(path)
         with h5py.File(h5file, 'a') as f:
@@ -67,6 +69,7 @@ def main():
     with h5py.File(configuration['file_pos_minmax'], 'r') as f:
         pos_min = f['minmax'][0, :][None, :]
         pos_max = f['minmax'][1, :][None, :]
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -89,11 +92,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    '''
     # TODO : suppress this after test
     args.save = os.getcwd().replace('bin', 'exp')
     args.folder = os.getcwd().replace('bin', 'dataset_master')
     args.type = 'train'
-
+    '''
 
     configuration = {'step': 0, 'type': args.type, 'fps': args.fps, 'sampling_rate': args.sampling,
                      'hop_length': args.hop_length, 'window_length': args.wlen, 'snr': args.snr}

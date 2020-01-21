@@ -1,7 +1,8 @@
 #!/bin/bash
+#!/usr/bin/env python3
+#!/usr/bin/env python2
 
 . ./path.sh
-. ./cmd.sh
 
 # general configuration
 stage=0

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import os
 import pickle
@@ -11,12 +12,12 @@ import sys
 module_utils = os.getcwd().replace('bin', 'utils')
 sys.path.append(module_utils)
 
-from audio_transform import load_audio
-from audio_transform import audio_augmontation
-from audio_transform import input_loader
-from audio_transform import audio_transform
+from utils.audio_transform import load_audio
+from utils.audio_transform import audio_augmontation
+from utils.audio_transform import input_loader
+from utils.audio_transform import audio_transform
 
-from motion_transform import motion_transform
+from utils.motion_transform import motion_transform
 
 
 def main():

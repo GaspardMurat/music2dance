@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import argparse
 import glob
@@ -12,11 +13,11 @@ import sys
 
 module_network = os.getcwd().replace('bin', 'network')
 sys.path.append(module_network)
-from convlstm import convlstm
+from network.convlstm import convlstm
 
 module_utils = os.getcwd().replace('bin', 'utils')
 sys.path.append(module_utils)
-from dataset import DataGenerator
+from utils.dataset import DataGenerator
 
 
 def main():
