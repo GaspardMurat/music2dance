@@ -29,9 +29,7 @@ def main():
     dataset = DataGenerator(path, args.batch, args.sequence, args.type, args.init_step, shuffle=True)
     batch_0 = dataset[0]
     input_shape = batch_0[0].shape[1:]
-    output_shape = batch_0[1].shape[2]  # output_shape = batch_0[1].shape[1:]
-    print('input shape: ', input_shape)
-    print('output shape: ', output_shape)
+    output_shape = batch_0[1].shape[1]  # output_shape = batch_0[1].shape[1:]
 
     folder_models = os.path.join(args.out, 'models')
 

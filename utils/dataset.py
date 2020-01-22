@@ -70,6 +70,7 @@ class DataGenerator(keras.utils.Sequence, ABC):
         return data_labels
 
     def __getitem__(self, index):
+        '''
         X = np.empty((self.batch_size, self.sequence, *self._dims[0], self.n_channels))
         y = np.empty((self.batch_size, self.sequence, *self._dims[1]))
 
@@ -80,7 +81,17 @@ class DataGenerator(keras.utils.Sequence, ABC):
             X[t] = input
             #y[t] = np.squeeze(example[1])
             y[t] = np.squeeze(example[1])
+        '''
+        X = np.empty((self.batch_size, self.sequence, *self._dims[0], self.n_channels))
+        y = np.empty((self.batch_size, *self._dims[1]))
+        for i in range(index, index + self.batch_size):
+            example = self.get_example(i)
+            t = i - index
+            input = np.expand_dims(np.squeeze(example[0]), axis=3)
+            X[t] = input
+            y[t] = np.squeeze(example[1])
         return X, y
+
 
     def on_epoch_end(self):
         if self.shuffle:
