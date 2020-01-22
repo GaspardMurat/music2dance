@@ -58,7 +58,8 @@ def main():
                                   epochs=args.epochs,
                                   use_multiprocessing=args.multiprocessing,
                                   workers=args.workers,
-                                  callbacks=callbacks_list)
+                                  callbacks=callbacks_list,
+                                  verbose=args.verbose)
 
     plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
