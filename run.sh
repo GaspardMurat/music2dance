@@ -19,7 +19,7 @@ batch=32
 checkpoints=1
 checkpoints_occurence=10
 
-. local/parse_options.sh || exit 1;
+. ./local/parse_options.sh || exit 1;
 
 fps=25
 sampling=44100
