@@ -13,7 +13,7 @@ exp=./exp
 
 type='train'
 
-lr=1.10-4
+lr=1.10e-4
 epochs=60
 batch=32
 checkpoints=1
