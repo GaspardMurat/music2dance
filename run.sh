@@ -2,8 +2,8 @@
 #!/usr/bin/env python3
 #!/usr/bin/env python2
 
-#echo "running path.sh"
-#. ./path.sh
+echo "running path.sh"
+. ./path.sh
 
 # general configuration
 
