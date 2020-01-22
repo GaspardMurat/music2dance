@@ -85,8 +85,8 @@ if __name__ == '__main__':
     parser.add_argument('--out', '-o', type=str,
                         help='path to out')
     parser.add_argument('--verbose', '-v', type=int,
-                        help='verbose', default=1)
-    parser.add_argument('--base_lr', '-lr', type=int,
+                        help='verbose', default=1.10e-4)
+    parser.add_argument('--base_lr', '-lr', type=float,
                         help='lr used first')
     parser.add_argument('--epochs', '-e', type=int,
                         help='nb of epochs')
