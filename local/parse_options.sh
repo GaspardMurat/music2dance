@@ -31,7 +31,8 @@
 ###
 
 # Now import all the configs specified by command-line, in left-to-right order
-for ((argpos=1; argpos<$#; argpos++)); do
+#for ((argpos=1; argpos<$#; argpos++)); do
+for ((argpos=1; argpos<3; argpos++)); do
   if [ "${!argpos}" == "--config" ]; then
     argpos_plus1=$((argpos+1))
     config=${!argpos_plus1}
