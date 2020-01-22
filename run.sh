@@ -7,7 +7,7 @@ echo "running path.sh"
 
 # general configuration
 
-stage=0
+stage=-1
 dataset_master_folder=./dataset_master
 exp=./exp
 
@@ -37,6 +37,10 @@ echo "============================================================"
 echo "                        Music2Dance"
 echo "============================================================"
 
+if [ ${stage} -eq -1 ]; then
+  echo "......Test......"
+fi
+
 if [ ${stage} -eq 0 ]; then
   echo "stage 0: preparing motion file..."
   motion_prepare.py -f ${fps} \
@@ -47,16 +51,17 @@ if [ ${stage} -eq 0 ]; then
                     -d ${dataset_master_folder} \
                     -o ${exp} \
                     -t ${type} || exit 1;
+  echo "----- End-to-End stage"
 fi
-echo "----- End-to-End stage"
+
 
 if [ ${stage} -eq 1 ]; then
   echo "stage 1: making h5 data files..."
   motion_audio_treatment.py -t ${type} \
                             -f ${exp} || exit 1;
-
+  echo "----- End-to-End stage"
 fi
-echo "----- End-to-End stage"
+
 
 if [ ${stage} -eq 2 ]; then
   echo "stage 2: Training network "
@@ -73,7 +78,8 @@ if [ ${stage} -eq 2 ]; then
                    -q ${sequence} \
                    -m ${multiprocessing} \
                    -w ${workers} || exit 1;
+  echo "----- End-to-End stage"
 fi
-echo "----- End-to-End stage"
+
 
 echo "`basename $0` Done."
