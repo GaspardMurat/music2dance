@@ -72,9 +72,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    '''
     # TODO : suppress this after test
     args.folder = os.getcwd().replace('bin', 'exp')
     args.type = 'train'
+    '''
 
     with open(os.path.join(args.folder, 'configuration.pickle'), 'rb') as f:
         config = pickle.load(f)

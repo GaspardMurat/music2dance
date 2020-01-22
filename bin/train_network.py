@@ -112,6 +112,7 @@ if __name__ == '__main__':
     # TODO: add validation data
     args = parser.parse_args()
 
+    '''
     # TODO: suppress this after test
     args.folder = os.getcwd().replace('bin', 'exp')
     args.type = 'train'
@@ -126,6 +127,7 @@ if __name__ == '__main__':
     args.batch = 32
     args.multiprocessing = True
     args.workers = 4
+    '''
 
     with open(os.path.join(args.folder, 'configuration.pickle'), 'rb') as f:
         config = pickle.load(f)
