@@ -14,10 +14,16 @@ exp=./exp
 type='train'
 
 lr=1.10e-4
-epochs=60
+epochs=10
 batch=32
 checkpoints=1
 checkpoints_occurence=10
+
+multiprocessing=True
+workers=4
+
+init_step=1
+sequence=50
 
 . ./local/parse_options.sh || exit 1;
 
@@ -25,11 +31,6 @@ fps=25
 sampling=44100
 hop_length=1764
 wlen=256
-
-init_step=1
-sequence=150
-multiprocessing=True
-workers=4
 
 train_folder=${exp}/trained
 

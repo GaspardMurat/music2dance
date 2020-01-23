@@ -9,6 +9,13 @@ import matplotlib.pyplot as plt
 from keras.utils import plot_model
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateScheduler
 
+from keras.backend.tensorflow_backend import set_session
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+sess = tf.Session(config=config)
+set_session(sess)  # set this TensorFlow session as the default session for Keras
+
 import sys
 
 module_network = os.getcwd().replace('bin', 'network')
@@ -42,6 +49,7 @@ def main():
                                   verbose=1,
                                   save_best_only=False,
                                   period=10)
+    print(model.summary())
 
     def lr_scheduler(epoch, lr):
         decay_rate = 0.90
