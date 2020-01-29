@@ -19,8 +19,8 @@ batch=32
 checkpoints=1
 checkpoints_occurence=10
 
-multiprocessing=True
-workers=4
+multiprocessing=False
+workers=1
 
 init_step=1
 sequence=150
