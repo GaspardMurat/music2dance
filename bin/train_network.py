@@ -12,6 +12,7 @@ from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateSchedul
 from keras.backend.tensorflow_backend import set_session
 import tensorflow as tf
 config = tf.ConfigProto()
+config.gpu_options.allocator_type = 'BFC'
 #config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
 config.gpu_options.per_process_gpu_memory_fraction = 0.8
 sess = tf.Session(config=config)
