@@ -100,6 +100,8 @@ def main():
         plt.legend(['Train', 'Test'], loc='upper left')
         plt.savefig(os.path.join(save, 'loss_values.png'))
 
+    plot_loss(history, args.save)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
