@@ -16,7 +16,12 @@ class DataGenerator(keras.utils.Sequence, ABC):
         self.sequence = sequence
         self.steps = 1
         self.shuffle = shuffle
-        logging.info('Searching in {}/{} for files:'.format(folder, stage))
+        print("############################################################################")
+        print("\n")
+        print('Searching in {} for files:'.format(folder))
+        print("\n")
+        print("############################################################################")
+        logging.info('Searching in {} for files:'.format(folder))
         self.list_file = glob.glob('{}/{}_*'.format(folder, stage))
         index = []
         for i in range(len(self.list_file)):

@@ -37,38 +37,79 @@ def calculate_minmax(fileslist):
 
 
 def main():
-    preprefix = os.path.join(args.save, 'data')
-    prefix = os.path.join(preprefix, args.type)
-    if not os.path.exists(args.save):
-        os.makedirs(args.save)
-        os.makedirs(preprefix)
-        os.makedirs(prefix)
-    join = os.path.join(args.folder, 'DANCE_*')
-    folders = glob.glob(join)
-    configuration[args.type] = prefix
-    for i in range(len(folders)):
-        path = folders[i]
-        motion, start_position, end_position, pos_min, pos_max = output_loader(path)
-        h5file = '{}f{:03d}.h5'.format(os.path.join(prefix, args.type), i)
-        list_path = np.string_(path)
-        with h5py.File(h5file, 'a') as f:
-            f.create_dataset('song_path', data=list_path)
-            f.create_dataset('motion', data=motion)
-            f.create_dataset('position', data=[start_position, end_position])
-            f.create_dataset('MinMax', data=[pos_min, pos_max])
+    if args.type == 'train':
+        print('====== Creating train dataset ======')
+        preprefix = os.path.join(args.save, 'data')
+        prefix = os.path.join(preprefix, args.type)
+        if not os.path.exists(args.save):
+            os.makedirs(args.save)
+            os.makedirs(preprefix)
+            os.makedirs(prefix)
+        join = os.path.join(args.folder, 'DANCE_*')
+        folders = glob.glob(join)
+        configuration[args.type] = prefix
+        for i in range(len(folders)):
+            path = folders[i]
+            print('Using ',path)
+            motion, start_position, end_position, pos_min, pos_max = output_loader(path)
+            h5file = '{}f{:03d}.h5'.format(os.path.join(prefix, args.type), i)
+            list_path = np.string_(path)
+            with h5py.File(h5file, 'a') as f:
+                f.create_dataset('song_path', data=list_path)
+                f.create_dataset('motion', data=motion)
+                f.create_dataset('position', data=[start_position, end_position])
+                f.create_dataset('MinMax', data=[pos_min, pos_max])
+            print('Making ', h5file)
 
-    configuration['file_pos_minmax'] = os.path.join(preprefix, 'pos_minmax.h5')
+        configuration['file_pos_minmax'] = os.path.join(preprefix, 'pos_minmax.h5')
 
-    if not os.path.exists(configuration['file_pos_minmax']):
-        file_list = glob.glob(os.path.join(configuration[args.type], '*'))
-        calculate_minmax(file_list)
+        if not os.path.exists(configuration['file_pos_minmax']):
+            file_list = glob.glob(os.path.join(configuration[args.type], '*'))
+            calculate_minmax(file_list)
 
-    with open(os.path.join(args.save, "configuration.pickle"), "wb") as f:
-        pickle.dump(configuration, f)
+        with open(os.path.join(args.save, "configuration.pickle"), "wb") as f:
+            pickle.dump(configuration, f)
 
-    with h5py.File(configuration['file_pos_minmax'], 'r') as f:
-        pos_min = f['minmax'][0, :][None, :]
-        pos_max = f['minmax'][1, :][None, :]
+        with h5py.File(configuration['file_pos_minmax'], 'r') as f:
+            pos_min = f['minmax'][0, :][None, :]
+            pos_max = f['minmax'][1, :][None, :]
+
+    elif args.type == 'test':
+        print('====== Creating test dataset ======')
+        preprefix = os.path.join(args.save, 'data')
+        prefix = os.path.join(preprefix, args.type)
+        if not os.path.exists(args.save):
+            os.makedirs(args.save)
+        if not os.path.exists(preprefix):
+            os.makedirs(preprefix)
+        if not os.path.exists(prefix):
+            os.makedirs(prefix)
+        join = os.path.join(args.folder, 'test', 'DANCE_*')
+        folders = glob.glob(join)
+        if os.path.exists(os.path.join(args.save, 'configuration.pickle')):
+            with open(os.path.join(args.save, 'configuration.pickle'), 'rb') as f:
+                config = pickle.load(f)
+        else:
+            logging.warning('Run stage 0 for train before running stage 0 for test.')
+
+        config[args.type] = prefix
+        for i in range(len(folders)):
+            path = folders[i]
+            print('Using ', path)
+            motion, start_position, end_position, pos_min, pos_max = output_loader(path)
+            h5file = '{}f{:03d}.h5'.format(os.path.join(prefix, args.type), i)
+            list_path = np.string_(path)
+            with h5py.File(h5file, 'a') as f:
+                f.create_dataset('song_path', data=list_path)
+                f.create_dataset('motion', data=motion)
+                f.create_dataset('position', data=[start_position, end_position])
+                f.create_dataset('MinMax', data=[pos_min, pos_max])
+            print('Making ', h5file)
+            with open(os.path.join(args.save, "configuration.pickle"), "wb") as f:
+                pickle.dump(config, f)
+    else:
+        logging.warning('Only train or test are acceptable arguments.')
+
 
 
 if __name__ == '__main__':
@@ -99,7 +140,7 @@ if __name__ == '__main__':
     args.type = 'train'
     '''
 
-    configuration = {'step': 0, 'type': args.type, 'fps': args.fps, 'sampling_rate': args.sampling,
+    configuration = {'step': 0, 'fps': args.fps, 'sampling_rate': args.sampling,
                      'hop_length': args.hop_length, 'window_length': args.wlen, 'snr': args.snr}
 
     main()

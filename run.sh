@@ -24,6 +24,7 @@ workers=1
 
 init_step=1
 sequence=150
+validation=True
 
 . ./local/parse_options.sh || exit 1;
 
@@ -66,8 +67,7 @@ fi
 
 if [ ${stage} -eq 2 ]; then
   echo "stage 2: Training network "
-  train_network.py -t ${type} \
-                   -f ${exp} \
+  train_network.py -f ${exp} \
                    -o ${train_folder} \
                    -v 1 \
                    -lr ${lr} \
@@ -77,6 +77,7 @@ if [ ${stage} -eq 2 ]; then
                    -co ${checkpoints_occurence} \
                    -is ${init_step} \
                    -q ${sequence} \
+                   -vs ${validation} \
                    -m ${multiprocessing} \
                    -w ${workers} || exit 1;
   echo "----- End-to-End stage"

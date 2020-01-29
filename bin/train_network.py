@@ -11,9 +11,10 @@ from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateSchedul
 
 from keras.backend.tensorflow_backend import set_session
 import tensorflow as tf
+
 config = tf.ConfigProto()
 config.gpu_options.allocator_type = 'BFC'
-#config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
+# config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
 config.gpu_options.per_process_gpu_memory_fraction = 0.8
 sess = tf.Session(config=config)
 set_session(sess)  # set this TensorFlow session as the default session for Keras
@@ -30,13 +31,16 @@ from utils.dataset import DataGenerator
 
 
 def main():
-    print('enter main')
-    path = config[args.type]
+    if 'test' not in config:
+        logging.warning('Path to validation set does not exist')
+        quit()
+
+    path = config['train']
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
-    dataset = DataGenerator(path, args.batch, args.sequence, args.type, args.init_step, shuffle=True)
-    batch_0 = dataset[0]
+    train_dataset = DataGenerator(path, args.batch, args.sequence, 'train', args.init_step, shuffle=True)
+    batch_0 = train_dataset[0]
     input_shape = batch_0[0].shape[1:]
     output_shape = batch_0[1].shape[1]  # output_shape = batch_0[1].shape[1:]
 
@@ -64,12 +68,25 @@ def main():
                       TerminateOnNaN(),
                       LearningRateScheduler(lr_scheduler, verbose=1)]
 
-    history = model.fit_generator(dataset,
-                                  epochs=args.epochs,
-                                  use_multiprocessing=args.multiprocessing,
-                                  workers=args.workers,
-                                  callbacks=callbacks_list,
-                                  verbose=args.verbose)
+    if args.validation_set:
+        validation_path = config['test']
+        test_dataset = DataGenerator(validation_path, args.batch, args.sequence, 'test', args.init_step,
+                                     shuffle=True)
+
+        history = model.fit_generator(train_dataset,
+                                      validation_data=test_dataset,
+                                      epochs=args.epochs,
+                                      use_multiprocessing=args.multiprocessing,
+                                      workers=args.workers,
+                                      callbacks=callbacks_list,
+                                      verbose=args.verbose)
+    else:
+        history = model.fit_generator(train_dataset,
+                                      epochs=args.epochs,
+                                      use_multiprocessing=args.multiprocessing,
+                                      workers=args.workers,
+                                      callbacks=callbacks_list,
+                                      verbose=args.verbose)
 
     plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
@@ -87,8 +104,6 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--type', '-t', type=str,
-                        help='train or test')
     parser.add_argument('--folder', '-f', type=str,
                         help='path to folders')
     parser.add_argument('--out', '-o', type=str,
@@ -117,8 +132,9 @@ if __name__ == '__main__':
                         help='use_multiprocessing', default=False)
     parser.add_argument('--workers', '-w', type=int,
                         help='nb of workers', default=1)
+    parser.add_argument('--validation_set', '-vs', type=str,
+                        help='Use of validation set or not', default=False)
 
-    # TODO: add validation data
     args = parser.parse_args()
 
     '''
