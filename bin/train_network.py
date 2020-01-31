@@ -100,7 +100,9 @@ def main():
         plt.legend(['Train', 'Test'], loc='upper left')
         plt.savefig(os.path.join(save, 'loss_values.png'))
 
-    plot_loss(history, args.save)
+    plot_loss(history, os.path.join(args.out, 'Loss.png'))
+
+    model.save(os.path.join(args.out, 'models', 'model.h5'))
 
 
 if __name__ == '__main__':
