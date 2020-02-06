@@ -40,9 +40,12 @@ def main():
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
     train_dataset = DataGenerator(path, args.batch, args.sequence, 'train', args.init_step, shuffle=True)
-    batch_0 = train_dataset[0]
+    batch_0 = train_dataset[270]
     input_shape = batch_0[0].shape[1:]
     output_shape = batch_0[1].shape[1]  # output_shape = batch_0[1].shape[1:]
+
+    print(batch_0[1].min())
+    quit()
 
     folder_models = os.path.join(args.out, 'models')
 
@@ -100,7 +103,7 @@ def main():
         plt.legend(['Train', 'Test'], loc='upper left')
         plt.savefig(os.path.join(save, 'loss_values.png'))
 
-    plot_loss(history, os.path.join(args.out, 'Loss.png'))
+    plot_loss(history, args.out)
 
     model.save(os.path.join(args.out, 'models', 'model.h5'))
 

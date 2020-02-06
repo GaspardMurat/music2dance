@@ -3,10 +3,10 @@ import os
 import sys
 import logging
 import glob
-
+import numpy as np
+import h5py
 import tensorflow as tf
 
-print(tf.version)
 '''
 physical_devices = tf.config.list_physical_devices('GPU')
 try:
