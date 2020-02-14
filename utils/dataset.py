@@ -69,9 +69,13 @@ class DataGenerator(keras.utils.Sequence, ABC):
                 data_labels[1] = np.zeros((1, self._dims[1][0]), dtype=np.float32)  # TODO(nelson): to variable size
             else:
                 #data_labels[1] = f[self._inputs[1]][iFL: iFL + self.steps]
-                data_labels[1] = f[self._inputs[1]][iFL + self.sequence: iFL + self.sequence + self.steps]
+                data_labels[1] = f[self._inputs[0]][iFL + self.sequence: iFL + self.sequence + self.steps]
 
             data_labels[2] = f[self._inputs[1]][iFL + self.steps: iFL + self.steps + self.sequence][None, :]
+        print('data_labels[0]: ', data_labels[0].shape)
+        print('data_labels[1]: ', data_labels[1].shape)
+        print('data_labels[2]: ', data_labels[2].shape)
+        quit()
         return data_labels
 
     def __getitem__(self, index):

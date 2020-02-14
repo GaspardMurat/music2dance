@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 
 from keras.utils import plot_model
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateScheduler
-
 from keras.backend.tensorflow_backend import set_session
 import tensorflow as tf
 
@@ -39,12 +38,11 @@ def main():
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
+    print('====== Test ======')
     train_dataset = DataGenerator(path, args.batch, args.sequence, 'train', args.init_step, shuffle=True)
     batch_0 = train_dataset[270]
     input_shape = batch_0[0].shape[1:]
     output_shape = batch_0[1].shape[1]  # output_shape = batch_0[1].shape[1:]
-
-    print(batch_0[1].min())
     quit()
 
     folder_models = os.path.join(args.out, 'models')
