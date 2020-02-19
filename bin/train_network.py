@@ -7,7 +7,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 from keras.utils import plot_model
-from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateScheduler
+from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateScheduler, TensorBoard
 from keras.backend.tensorflow_backend import set_session
 import tensorflow as tf
 
@@ -22,11 +22,11 @@ import sys
 
 module_network = os.getcwd().replace('bin', 'network')
 sys.path.append(module_network)
-from network.convlstm import convlstm
+from network.convLSTM2dMoldel import ConvLSTM2dModel
 
 module_utils = os.getcwd().replace('bin', 'utils')
 sys.path.append(module_utils)
-from utils.dataset import DataGenerator
+from utils.dataset2 import DataGenerator2
 
 
 def main():
@@ -38,19 +38,17 @@ def main():
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
-    print('====== Test ======')
-    train_dataset = DataGenerator(path, args.batch, args.sequence, 'train', args.init_step, shuffle=True)
+    train_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step, shuffle=True)
     batch_0 = train_dataset[270]
-    input_shape = batch_0[0].shape[1:]
-    output_shape = batch_0[1].shape[1]  # output_shape = batch_0[1].shape[1:]
-    quit()
-
+    input_encoder_shape = batch_0[0][0].shape[1:]
+    input_decoder_shape = batch_0[0][0].shape[1:]
+    output_shape = batch_0[1].shape[1:]
     folder_models = os.path.join(args.out, 'models')
 
     if not os.path.exists(folder_models):
         os.makedirs(folder_models)
 
-    model = convlstm(input_shape, output_shape, args.base_lr)
+    model = ConvLSTM2dModel(input_encoder_shape, output_shape, args.base_lr)
 
     model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                   verbose=1,
@@ -71,7 +69,7 @@ def main():
 
     if args.validation_set:
         validation_path = config['test']
-        test_dataset = DataGenerator(validation_path, args.batch, args.sequence, 'test', args.init_step,
+        test_dataset = DataGenerator2(validation_path, args.batch, args.sequence, args.sequence_out,'test', args.init_step,
                                      shuffle=True)
 
         history = model.fit_generator(train_dataset,
@@ -129,6 +127,8 @@ if __name__ == '__main__':
                         help='nb of epochs', default=0)
     parser.add_argument('--sequence', '-q', type=int,
                         help='Training sequence', default=1)
+    parser.add_argument('--sequence_out', '-p', type=int,
+                        help='Training out sequence', default=1)
     parser.add_argument('--validation', '-val', type=str,
                         help='use validation data', default=True)
     parser.add_argument('--validation_prop', '-vp', type=float,
@@ -141,23 +141,6 @@ if __name__ == '__main__':
                         help='Use of validation set or not', default=False)
 
     args = parser.parse_args()
-
-    '''
-    # TODO: suppress this after test
-    args.folder = os.getcwd().replace('bin', 'exp')
-    args.type = 'train'
-    args.out = os.path.join(os.getcwd().replace('bin', 'exp'), 'trained')
-    args.verbose = 1
-    args.base_lr = 1.10e-4
-    args.epochs = 10
-    args.checkpoint = 1
-    args.checkpoint_occurrence = 5
-    args.init_step = 1
-    args.sequence = 150
-    args.batch = 32
-    args.multiprocessing = True
-    args.workers = 4
-    '''
 
     with open(os.path.join(args.folder, 'configuration.pickle'), 'rb') as f:
         config = pickle.load(f)

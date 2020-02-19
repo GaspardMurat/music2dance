@@ -8,6 +8,12 @@ import numpy as np
 
 
 class DataGenerator(keras.utils.Sequence, ABC):
+    '''
+    Dataset class:
+        __get_item__: return a batch of data.
+                     X = sequence of STFT from i to i+sequence
+                     Y = sequence of motion from i+step to i+step+sequence
+    '''
 
     def __init__(self, folder, batch_size, sequence, stage, init_step, shuffle=True):
         self.n_channels = 1
@@ -72,10 +78,6 @@ class DataGenerator(keras.utils.Sequence, ABC):
                 data_labels[1] = f[self._inputs[0]][iFL + self.sequence: iFL + self.sequence + self.steps]
 
             data_labels[2] = f[self._inputs[1]][iFL + self.steps: iFL + self.steps + self.sequence][None, :]
-        print('data_labels[0]: ', data_labels[0].shape)
-        print('data_labels[1]: ', data_labels[1].shape)
-        print('data_labels[2]: ', data_labels[2].shape)
-        quit()
         return data_labels
 
     def __getitem__(self, index):

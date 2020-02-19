@@ -24,6 +24,7 @@ workers=1
 
 init_step=1
 sequence=150
+out_sequence=10
 validation=True
 
 . ./local/parse_options.sh || exit 1;
@@ -77,6 +78,7 @@ if [ ${stage} -eq 2 ]; then
                    -co ${checkpoints_occurence} \
                    -is ${init_step} \
                    -q ${sequence} \
+                   -p ${out_sequence} \
                    -vs ${validation} \
                    -m ${multiprocessing} \
                    -w ${workers} || exit 1;
