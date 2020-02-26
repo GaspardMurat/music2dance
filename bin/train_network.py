@@ -155,7 +155,7 @@ if __name__ == '__main__':
     config['sequence_out'] = args.sequence_out
     config['base_lr'] = args.base_lr
     config['init_step'] = args.init_step
-    config['batch_size'] = args.batch_size
+    config['batch_size'] = args.batch
 
     with open(os.path.join(args.folder, 'configuration.pickle'), "wb") as f:
         pickle.dump(config, f)

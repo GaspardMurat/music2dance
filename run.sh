@@ -24,7 +24,7 @@ workers=1
 
 init_step=1
 sequence=150
-out_sequence=10
+sequence_out=10
 validation=True
 
 # Validation
@@ -88,7 +88,7 @@ if [ ${stage} -eq 2 ]; then
                    -co ${checkpoints_occurence} \
                    -is ${init_step} \
                    -q ${sequence} \
-                   -p ${out_sequence} \
+                   -p ${sequence_out} \
                    -vs ${validation} \
                    -m ${multiprocessing} \
                    -w ${workers} || exit 1;
