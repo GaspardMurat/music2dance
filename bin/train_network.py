@@ -91,6 +91,9 @@ def main():
 
     model.save(os.path.join(args.out, 'models', 'model.h5'))
 
+    with open(os.path.join(args.out,'trainHistoryDict'), 'wb') as file_pi:
+        pickle.dump(history.history, file_pi)
+
     plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
     def plot_loss(hist, save):

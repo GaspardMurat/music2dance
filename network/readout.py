@@ -388,8 +388,6 @@ class ConvRNN2D_readout(RNN):
                   'recurrent_regularizer':
                       regularizers.serialize(self.recurrent_regularizer),
                   'bias_regularizer': regularizers.serialize(self.bias_regularizer),
-                  'activity_regularizer':
-                      regularizers.serialize(self.activity_regularizer),
                   'kernel_constraint':
                       constraints.serialize(self.kernel_constraint),
                   'recurrent_constraint':
