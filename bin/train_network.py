@@ -51,10 +51,11 @@ def main():
 
     model = ConvLSTM2dModel(input_encoder_shape, output_shape, args.base_lr)
 
-    model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
+    model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.hdf5'),  # {epoch:04d}.hdf5'),
                                   verbose=1,
                                   save_best_only=False,
-                                  period=10)
+                                  save_weights_only=True,
+                                  period=1)
     print(model.summary())
 
     def lr_scheduler(epoch, lr):
@@ -89,9 +90,9 @@ def main():
                                       callbacks=callbacks_list,
                                       verbose=args.verbose)
 
-    model.save(os.path.join(args.out, 'models', 'model.h5'))
+    model.save_weights(os.path.join(args.out, 'models', 'model.h5'))
 
-    with open(os.path.join(args.out,'trainHistoryDict'), 'wb') as file_pi:
+    with open(os.path.join(args.out, 'trainHistoryDict'), 'wb') as file_pi:
         pickle.dump(history.history, file_pi)
 
     plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
@@ -117,9 +118,9 @@ if __name__ == '__main__':
     parser.add_argument('--out', '-o', type=str,
                         help='path to out')
     parser.add_argument('--verbose', '-v', type=int,
-                        help='verbose', default=1.10e-4)
+                        help='verbose', default=1)
     parser.add_argument('--base_lr', '-lr', type=float,
-                        help='lr used first')
+                        help='lr used first', default=1.10e-4)
     parser.add_argument('--epochs', '-e', type=int,
                         help='nb of epochs')
     parser.add_argument('--batch', '-b', type=int,
@@ -129,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint_occurrence', '-co', type=int,
                         help='number of epochs per checkpoint', default=10)
     parser.add_argument('--init_step', '-is', type=int,
-                        help='nb of epochs', default=0)
+                        help='init step', default=0)
     parser.add_argument('--sequence', '-q', type=int,
                         help='Training sequence', default=1)
     parser.add_argument('--sequence_out', '-p', type=int,
@@ -149,5 +150,14 @@ if __name__ == '__main__':
 
     with open(os.path.join(args.folder, 'configuration.pickle'), 'rb') as f:
         config = pickle.load(f)
+
+    config['sequence'] = args.sequence
+    config['sequence_out'] = args.sequence_out
+    config['base_lr'] = args.base_lr
+    config['init_step'] = args.init_step
+    config['batch_size'] = args.batch_size
+
+    with open(os.path.join(args.folder, 'configuration.pickle'), "wb") as f:
+        pickle.dump(config, f)
 
     main()

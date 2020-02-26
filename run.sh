@@ -28,11 +28,6 @@ out_sequence=10
 validation=True
 
 # Validation
-
-model=./exp/trained/models/model.ckpt.0100.hdf5
-folder_in=./exp/data/test
-folder_out=./exp/trained
-configuration_file=./exp/configuration.pickle
 transformed=True
 final_json=True
 
@@ -45,6 +40,11 @@ hop_length=1764
 wlen=256
 
 train_folder=${exp}/trained
+
+model=${exp}/trained/models/model.h5
+folder_in=${exp}/data/test
+folder_out=${exp}/trained
+configuration_file=${exp}/configuration.pickle
 
 echo "============================================================"
 echo "                        Music2Dance"
@@ -105,9 +105,6 @@ if [ ${stage} -eq 3 ]; then
                    -c ${configuration_file} \
                    -r 0 \
                    -v 1 \
-                   -b ${batch} \
-                   -q ${sequence} \
-                   -p ${out_sequence} \
                    -mu ${multiprocessing} \
                    -w ${workers} || exit 1;
   echo "----- End-to-End stage"

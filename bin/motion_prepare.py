@@ -133,13 +133,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    '''
-    # TODO : suppress this after test
-    args.save = os.getcwd().replace('bin', 'exp')
-    args.folder = os.getcwd().replace('bin', 'dataset_master')
-    args.type = 'train'
-    '''
-
     configuration = {'step': 0, 'fps': args.fps, 'sampling_rate': args.sampling,
                      'hop_length': args.hop_length, 'window_length': args.wlen, 'snr': args.snr}
 

@@ -72,16 +72,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    '''
-    # TODO : suppress this after test
-    args.folder = os.getcwd().replace('bin', 'exp')
-    args.type = 'train'
-    '''
-
     with open(os.path.join(args.folder, 'configuration.pickle'), 'rb') as f:
         config = pickle.load(f)
 
     config['rng_pos'] = [-0.9, 0.9]
     config['rng_wav'] = [-0.9, 0.9]
+
     main()
+
+    with open(os.path.join(args.folder, 'configuration.pickle'), "wb") as f:
+        pickle.dump(config, f)
     print(config)

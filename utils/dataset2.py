@@ -35,10 +35,10 @@ class DataGenerator2(keras.utils.Sequence, ABC):
         for i in range(len(self.list_file)):
             with h5py.File(self.list_file[i], 'r') as f:
                 current_lenght = f[self._inputs[0]].shape[0]
-                if 2*self.sequence >= current_lenght:
+                if self.sequence + self.sequence_out >= current_lenght:
                     logging.error('The lenght of the sequence is larger thant the lenght of the file...')
                     raise ValueError('')
-                max_size = current_lenght - (2*self.sequence + self.steps)
+                max_size = current_lenght - (self.sequence + self.sequence_out + self.steps)
                 if not '_dims' in locals():
                     _dims = [None] * len(self._inputs)
                     _types = [None] * len(self._inputs)
@@ -65,8 +65,6 @@ class DataGenerator2(keras.utils.Sequence, ABC):
 
     def __len__(self):
         return int(np.floor(len(self.idxs) / self.batch_size))
-
-    # TODO: change get_example, get_item for output sequence
 
     def get_example(self, i):
         iDB, iFL = self.idxs[i]
