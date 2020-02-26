@@ -38,7 +38,8 @@ def main():
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
-    train_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step, shuffle=True)
+    train_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step,
+                                   shuffle=True)
     batch_0 = train_dataset[270]
     input_encoder_shape = batch_0[0][0].shape[1:]
     input_decoder_shape = batch_0[0][0].shape[1:]
@@ -69,8 +70,9 @@ def main():
 
     if args.validation_set:
         validation_path = config['test']
-        test_dataset = DataGenerator2(validation_path, args.batch, args.sequence, args.sequence_out,'test', args.init_step,
-                                     shuffle=True)
+        test_dataset = DataGenerator2(validation_path, args.batch, args.sequence, args.sequence_out, 'test',
+                                      args.init_step,
+                                      shuffle=True)
 
         history = model.fit_generator(train_dataset,
                                       validation_data=test_dataset,
@@ -87,6 +89,8 @@ def main():
                                       callbacks=callbacks_list,
                                       verbose=args.verbose)
 
+    model.save(os.path.join(args.out, 'models', 'model.h5'))
+
     plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
     def plot_loss(hist, save):
@@ -100,8 +104,6 @@ def main():
         plt.savefig(os.path.join(save, 'loss_values.png'))
 
     plot_loss(history, args.out)
-
-    model.save(os.path.join(args.out, 'models', 'model.h5'))
 
 
 if __name__ == '__main__':

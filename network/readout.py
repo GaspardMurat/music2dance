@@ -281,3 +281,122 @@ class ConvRNN2D_readout(RNN):
             return last_output
 
         return outputs
+
+    @property
+    def filters(self):
+        return self.cell.filters
+
+    @property
+    def kernel_size(self):
+        return self.cell.kernel_size
+
+    @property
+    def strides(self):
+        return self.cell.strides
+
+    @property
+    def padding(self):
+        return self.cell.padding
+
+    @property
+    def data_format(self):
+        return self.cell.data_format
+
+    @property
+    def dilation_rate(self):
+        return self.cell.dilation_rate
+
+    @property
+    def activation(self):
+        return self.cell.activation
+
+    @property
+    def recurrent_activation(self):
+        return self.cell.recurrent_activation
+
+    @property
+    def use_bias(self):
+        return self.cell.use_bias
+
+    @property
+    def kernel_initializer(self):
+        return self.cell.kernel_initializer
+
+    @property
+    def recurrent_initializer(self):
+        return self.cell.recurrent_initializer
+
+    @property
+    def bias_initializer(self):
+        return self.cell.bias_initializer
+
+    @property
+    def unit_forget_bias(self):
+        return self.cell.unit_forget_bias
+
+    @property
+    def kernel_regularizer(self):
+        return self.cell.kernel_regularizer
+
+    @property
+    def recurrent_regularizer(self):
+        return self.cell.recurrent_regularizer
+
+    @property
+    def bias_regularizer(self):
+        return self.cell.bias_regularizer
+
+    @property
+    def kernel_constraint(self):
+        return self.cell.kernel_constraint
+
+    @property
+    def recurrent_constraint(self):
+        return self.cell.recurrent_constraint
+
+    @property
+    def bias_constraint(self):
+        return self.cell.bias_constraint
+
+    @property
+    def dropout(self):
+        return self.cell.dropout
+
+    @property
+    def recurrent_dropout(self):
+        return self.cell.recurrent_dropout
+
+    def get_config(self):
+        config = {'filters': self.filters,
+                  'kernel_size': self.kernel_size,
+                  'strides': self.strides,
+                  'padding': self.padding,
+                  'data_format': self.data_format,
+                  'dilation_rate': self.dilation_rate,
+                  'activation': activations.serialize(self.activation),
+                  'recurrent_activation':
+                      activations.serialize(self.recurrent_activation),
+                  'use_bias': self.use_bias,
+                  'kernel_initializer':
+                      initializers.serialize(self.kernel_initializer),
+                  'recurrent_initializer':
+                      initializers.serialize(self.recurrent_initializer),
+                  'bias_initializer': initializers.serialize(self.bias_initializer),
+                  'unit_forget_bias': self.unit_forget_bias,
+                  'kernel_regularizer':
+                      regularizers.serialize(self.kernel_regularizer),
+                  'recurrent_regularizer':
+                      regularizers.serialize(self.recurrent_regularizer),
+                  'bias_regularizer': regularizers.serialize(self.bias_regularizer),
+                  'activity_regularizer':
+                      regularizers.serialize(self.activity_regularizer),
+                  'kernel_constraint':
+                      constraints.serialize(self.kernel_constraint),
+                  'recurrent_constraint':
+                      constraints.serialize(self.recurrent_constraint),
+                  'bias_constraint': constraints.serialize(self.bias_constraint),
+                  'dropout': self.dropout,
+                  'recurrent_dropout': self.recurrent_dropout}
+        base_config = super(ConvRNN2D_readout, self).get_config()
+        del base_config['cell']
+        return dict(list(base_config.items()) + list(config.items()))

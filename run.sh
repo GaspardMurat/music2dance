@@ -27,6 +27,16 @@ sequence=150
 out_sequence=10
 validation=True
 
+# Validation
+
+model=./exp/trained/models/model.ckpt.0100.hdf5
+folder_in=./exp/data/test
+folder_out=./exp/trained
+configuration_file=./exp/configuration.pickle
+transformed=True
+final_json=True
+
+
 . ./local/parse_options.sh || exit 1;
 
 fps=25
@@ -81,6 +91,24 @@ if [ ${stage} -eq 2 ]; then
                    -p ${out_sequence} \
                    -vs ${validation} \
                    -m ${multiprocessing} \
+                   -w ${workers} || exit 1;
+  echo "----- End-to-End stage"
+fi
+
+if [ ${stage} -eq 3 ]; then
+  echo "stage 3: Evaluating network "
+  validation.py -m ${model} \
+                   -i ${folder_in} \
+                   -o ${folder_out} \
+                   -t ${transformed} \
+                   -f ${final_json} \
+                   -c ${configuration_file} \
+                   -r 0 \
+                   -v 1 \
+                   -b ${batch} \
+                   -q ${sequence} \
+                   -p ${out_sequence} \
+                   -mu ${multiprocessing} \
                    -w ${workers} || exit 1;
   echo "----- End-to-End stage"
 fi
