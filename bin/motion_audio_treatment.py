@@ -34,7 +34,7 @@ def main():
             soundPath = str(np.array(f['song_path']))[2:-1]
 
         # TODO: finish motion transform (add silence)
-        motion = motion_transform(motion, config)
+        motion, motion_mean = motion_transform(motion, config)
         motion = np.squeeze(motion
                             )
         samplingRate = config['sampling_rate']
@@ -59,6 +59,7 @@ def main():
                         f.create_dataset('input', data=audiodata)
                         f.create_dataset('snr', data=snr)
                         f.create_dataset('position', data=pos)
+                        f.create_dataset('motion_mean', data=motion_mean)
                 print('ok')
 
 

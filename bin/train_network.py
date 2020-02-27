@@ -51,10 +51,11 @@ def main():
 
     model = ConvLSTM2dModel(input_encoder_shape, output_shape, args.base_lr)
 
-    model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.hdf5'),  # {epoch:04d}.hdf5'),
+    model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                   verbose=1,
-                                  save_best_only=False,
+                                  save_best_only=True,
                                   save_weights_only=True,
+                                  mode='auto',
                                   period=1)
     print(model.summary())
 

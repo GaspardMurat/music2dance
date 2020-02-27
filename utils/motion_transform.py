@@ -15,11 +15,19 @@ def motion_transform(position_data, config):
     div[div == 0] = 1
     config['slope_pos'] = (config['rng_pos'][1] - config['rng_pos'][0]) / div
     config['intersec_pos'] = config['rng_pos'][1] - config['slope_pos'] * pos_max
-    init_trans = np.mean(position_data[0:25,:], axis=0)
+    init_trans = np.mean(position_data[0:25, :], axis=0)
     position_data[:, :] -= init_trans
     position_data = position_data * config['slope_pos'] + config['intersec_pos']
 
-    return position_data
+    return position_data, init_trans
+
+
+def motion_untransform(position_data, config):
+    with h5py.File(config['file_pos_minmax'], 'r') as f:
+        minmax = np.array(f['minmax']).T
+        pos_min = minmax[0, :][None, :]
+        pos_max = minmax[1, :][None, :]
+
 
 if __name__ == '__main__':
     prefix = os.getcwd().replace('utils', 'exp/data/train/trainf000.h5')

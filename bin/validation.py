@@ -5,6 +5,9 @@ import glob
 import logging
 import pickle
 import h5py
+import json
+import codecs
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -28,12 +31,40 @@ def get_motion_sequence(i, index, file):
     return data_labels
 
 
+def save(output, start_position, end_position, path):
+    nb_data = output.shape[0]
+    output = np.reshape(output, (nb_data, 23, 3))
+    output = output.tolist()
+    skeletons = {"length": nb_data, "skeletons": output}
+    with open(path + '/skeletons.json', "w") as write_file:
+        json.dump(skeletons, codecs.open(path + '/skeletons.json', 'w', encoding='utf-8'),
+                  separators=(',', ':'), sort_keys=True,
+                  indent=4)
+
+    start_position = int(start_position)
+    end_position = int(end_position)
+    config = {"start_position": start_position, "end_position": end_position}
+
+    with open(path + '/config.json', "w") as write_file:
+        json.dump(config, write_file)
+
+
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
+
+
 def main():
     path = config['test']
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
-    train_dataset = DataGenerator2(path, config['batch_size'],  config['sequence'], config['sequence_out'], 'test',
+    train_dataset = DataGenerator2(path, config['batch_size'], config['sequence'], config['sequence_out'], 'test',
                                    config['init_step'], shuffle=True)
     batch_0 = train_dataset[270]
     input_encoder_shape = batch_0[0][0].shape[1:]
@@ -44,8 +75,12 @@ def main():
     model.load_weights(args.model_weights)
 
     validation_set = 'validation_set'
-    if not os.path.exists(os.path.join(args.folder_out, validation_set)):
-        os.makedirs(os.path.join(args.folder_out, validation_set))
+    prefix = os.path.join(args.folder_out, validation_set)
+    utils = os.path.join(prefix, 'utils')
+    if not os.path.exists(prefix):
+        os.makedirs(prefix)
+        os.makedirs(utils)
+        copytree(src='./draw', dst=utils)
 
     # TODO: transformed == True:
     if args.transformed:
@@ -69,9 +104,27 @@ def main():
                 x_labels[1] = np.expand_dims(x_labels[1], axis=0)
                 x_labels[1] = np.expand_dims(x_labels[1], axis=-1)
                 prediction = model.predict(x_labels)
-                sequence_predictions.append(prediction)
+                prediction = np.squeeze(prediction)
+                sequence_predictions.append(prediction[0])
 
-            # TODO: about the concatenation of outputs...
+            file_name = file.split('/')[-1]
+            original_file = os.path.join(args.folder_in, file_name)
+            with h5py.File(original_file, 'r') as f:
+                song_name = f['song_path']
+                pos = f['position']
+                mean = f['motion_mean']
+                print('position: ', pos)
+                print('song name: ', song_name)
+                quit()
+
+            song_name = song_name.split('/')[-1]
+
+            sequence_predictions = np.array(sequence_predictions)
+            start_pos = config['sequence']
+            end_pos = sequence_predictions.shape[0] + config['sequence_out']
+
+            os.makedirs(os.path.join(prefix, 'DANCE_' + file_name))
+            save(sequence_predictions, start_pos, end_pos, path=os.path.join(prefix, 'DANCE_' + song_name))
 
 
 if __name__ == '__main__':
