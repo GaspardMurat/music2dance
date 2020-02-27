@@ -24,11 +24,8 @@ class DataGenerator2(keras.utils.Sequence, ABC):
         self.sequence_out = sequence_out
         self.steps = 1
         self.shuffle = shuffle
-        print("############################################################################")
-        print("\n")
-        print('Searching in {} for files:'.format(folder))
-        print("\n")
-        print("############################################################################")
+        _dims = None
+        _types = None
         logging.info('Searching in {} for files:'.format(folder))
         self.list_file = glob.glob('{}/{}_*'.format(folder, stage))
         index = []
@@ -39,7 +36,7 @@ class DataGenerator2(keras.utils.Sequence, ABC):
                     logging.error('The lenght of the sequence is larger thant the lenght of the file...')
                     raise ValueError('')
                 max_size = current_lenght - (self.sequence + self.sequence_out + self.steps)
-                if not '_dims' in locals():
+                if _dims is None:
                     _dims = [None] * len(self._inputs)
                     _types = [None] * len(self._inputs)
                     for j in range(len(self._inputs)):
@@ -72,7 +69,8 @@ class DataGenerator2(keras.utils.Sequence, ABC):
         with h5py.File(self.list_file[iDB], 'r') as f:
             data_labels[0] = f[self._inputs[0]][iFL: iFL + self.sequence]
             data_labels[1] = f[self._inputs[0]][iFL + self.sequence: iFL + self.sequence + self.sequence_out]
-            data_labels[2] = f[self._inputs[1]][iFL + self.steps + self.sequence: iFL + self.steps + self.sequence + self.sequence_out]
+            data_labels[2] = f[self._inputs[1]][
+                             iFL + self.steps + self.sequence: iFL + self.steps + self.sequence + self.sequence_out]
         return data_labels
 
     def __getitem__(self, index):
@@ -88,9 +86,11 @@ class DataGenerator2(keras.utils.Sequence, ABC):
             X_decoder[t] = input_encoder[-1]
             y[t] = output_decoder
         return [X_encoder, X_decoder], y
-        #return [X_encoder, X_encoder], y
-
+        # return [X_encoder, X_encoder], y
 
     def on_epoch_end(self):
         if self.shuffle:
             np.random.shuffle(self.idxs)
+
+
+
