@@ -16,8 +16,10 @@ from utils.audio_transform import load_audio
 from utils.audio_transform import audio_augmontation
 from utils.audio_transform import input_loader
 from utils.audio_transform import audio_transform
+from utils.audio_transform import audio_silence
 
 from utils.motion_transform import motion_transform
+from utils.motion_transform import motion_silence
 
 
 def main():
@@ -26,6 +28,7 @@ def main():
     logging.info('Preparing dataset...')
     for i in range(len(file_list)):
         item = file_list[i]
+        print('treatment of {}'.format(item))
         with h5py.File(item, 'r') as f:
             motion = np.array(f['motion'])
             pos = np.array(f['position'])
@@ -33,14 +36,12 @@ def main():
             end_pos = pos[1]
             soundPath = str(np.array(f['song_path']))[2:-1]
 
-        # TODO: finish motion transform (add silence)
         motion, motion_mean = motion_transform(motion, config)
-        motion = np.squeeze(motion
-                            )
+        motion = np.squeeze(motion)
+
         samplingRate = config['sampling_rate']
         audio_wave, sr = load_audio(soundPath, samplingRate)
         for snr in config['snr']:
-            # TODO: finish  data_augmontation (add silence)
             transformed_audio_wave = audio_augmontation(audio_wave, snr)
             audiodata, bool = input_loader(transformed_audio_wave, start_pos, end_pos, config)
             if not bool:
@@ -48,19 +49,23 @@ def main():
                 os.remove(item)
             else:
                 audiodata = audio_transform(audiodata, config)
+                silence_audio = audio_silence(config)
+                audiodata = np.concatenate((silence_audio, audiodata, silence_audio))
+
+                silence_pos = motion_silence(motion, silence_audio.shape[0])
+                motion = np.concatenate((silence_pos, motion, silence_pos))
 
                 os.remove(item)
 
                 for snr in config['snr']:
                     h5file = '{}f{:03d}snr{:03d}.h5'.format(os.path.join(prefix, args.type + '_'), i, snr)
                     with h5py.File(h5file, 'a') as f:
-                        f.create_dataset('song_path', data=item)
+
+                        f.create_dataset('sound_path', data=soundPath)
                         f.create_dataset('motion', data=motion)
                         f.create_dataset('input', data=audiodata)
                         f.create_dataset('snr', data=snr)
                         f.create_dataset('position', data=pos)
-                        f.create_dataset('motion_mean', data=motion_mean)
-                print('ok')
 
 
 if __name__ == '__main__':
@@ -70,12 +75,18 @@ if __name__ == '__main__':
                         help='train or test')
     parser.add_argument('--folder', '-f', type=str,
                         help='path to folders')
+    parser.add_argument('--silence', '-s', type=int,
+                        help='snr value', default=1)
+    parser.add_argument('--normalisation', '-n', type=str,
+                        help='motion normalisation', default='none')
 
     args = parser.parse_args()
 
     with open(os.path.join(args.folder, 'configuration.pickle'), 'rb') as f:
         config = pickle.load(f)
 
+    config['silence'] = args.silence
+    config['normalisation'] = args.normalisation
     config['rng_pos'] = [-0.9, 0.9]
     config['rng_wav'] = [-0.9, 0.9]
 

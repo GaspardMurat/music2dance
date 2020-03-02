@@ -16,7 +16,7 @@ def load_audio(path, samplingrate=44100):
 
 # TODO : to apply noise, or other transformation to audiodata, use this function after load_audio().
 def audio_augmontation(audiodata, snr):
-    audiodata /= np.amax(np.abs(audiodata))
+    #audiodata /= np.amax(np.abs(audiodata))
     return audiodata
 
 
@@ -69,3 +69,11 @@ def audio_transform(data_audio, config):
     config['intersec_wav'] = config['rng_wav'][1] - config['slope_wav'] * audio_max
     audiodata = data_audio * config['slope_wav'] + config['intersec_wav']
     return audiodata
+
+
+def audio_silence(config):
+    silence_wav = np.random.rand(config['silence'] * config['sampling_rate']).astype(np.float32) * (10 ** -5)
+    silence_wav /= np.amax(np.abs(silence_wav))
+    end = int(config['silence'] * config['fps'] / 2)
+    silence, bool = input_loader(silence_wav, 0, end, config)
+    return silence

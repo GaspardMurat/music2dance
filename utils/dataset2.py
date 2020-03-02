@@ -28,6 +28,7 @@ class DataGenerator2(keras.utils.Sequence, ABC):
         _types = None
         logging.info('Searching in {} for files:'.format(folder))
         self.list_file = glob.glob('{}/{}_*'.format(folder, stage))
+        print('Searching in {} for files:'.format(folder))
         index = []
         for i in range(len(self.list_file)):
             with h5py.File(self.list_file[i], 'r') as f:

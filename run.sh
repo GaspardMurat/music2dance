@@ -11,11 +11,11 @@ stage=-1
 dataset_master_folder=./dataset_master
 exp=./exp
 
-type='train'
+normalisation='interval'
 
 lr=1.10e-4
 epochs=10
-batch=32
+batch=64
 checkpoints=1
 checkpoints_occurence=10
 
@@ -30,6 +30,8 @@ validation=True
 # Validation
 transformed=True
 final_json=True
+
+silence=10
 
 
 . ./local/parse_options.sh || exit 1;
@@ -63,14 +65,28 @@ if [ ${stage} -eq 0 ]; then
                     -r 0 \
                     -d ${dataset_master_folder} \
                     -o ${exp} \
-                    -t ${type} || exit 1;
+                    -t 'train' || exit 1;
+  motion_prepare.py -f ${fps} \
+                    -sr ${sampling} \
+                    -hl ${hop_length} \
+                    -w ${wlen} \
+                    -r 0 \
+                    -d ${dataset_master_folder} \
+                    -o ${exp} \
+                    -t 'test' || exit 1;
   echo "----- End-to-End stage"
 fi
 
 
 if [ ${stage} -eq 1 ]; then
   echo "stage 1: making h5 data files..."
-  motion_audio_treatment.py -t ${type} \
+  motion_audio_treatment.py -t 'train' \
+                            -n ${normalisation} \
+                            -s ${silence} \
+                            -f ${exp} || exit 1;
+  motion_audio_treatment.py -t 'test' \
+                            -n ${normalisation} \
+                            -s ${silence} \
                             -f ${exp} || exit 1;
   echo "----- End-to-End stage"
 fi

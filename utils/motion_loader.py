@@ -26,8 +26,8 @@ def load_motions_features(dance_path):
 
 
 def normalize_skeletons(data):
-    data_min = np.amin(data, axis=0)
-    data_max = np.amax(data, axis=0)
+    data_min = np.amin(np.abs(data), axis=0)
+    data_max = np.amax(np.abs(data), axis=0)
     one = np.ones(data.shape)
     normalize_data = (2 * (data - data_min) / (data_max - data_min)) - one
     return normalize_data, data_max, data_min
@@ -35,6 +35,5 @@ def normalize_skeletons(data):
 
 def output_loader(path_to_data='dataset_master'):
     motions_features, START_POS, END_POS = load_motions_features(path_to_data)
-    _, pos_max, pos_min = normalize_skeletons(motions_features)
 
-    return motions_features, START_POS, END_POS, pos_min, pos_max
+    return motions_features, START_POS, END_POS

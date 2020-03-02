@@ -13,16 +13,20 @@ import matplotlib.pyplot as plt
 
 import sys
 
+module_utils = os.getcwd().replace('bin', 'utils')
+sys.path.append(module_utils)
+from utils.motion_transform import reverse_motion_transform
+
 module_network = os.getcwd().replace('bin', 'network')
 sys.path.append(module_network)
-from network.convLSTM2dMoldel import ConvLSTM2dModel
+from network.convLSTM2dMoldel2 import ConvLSTM2dModel
 
 module_utils = os.getcwd().replace('bin', 'utils')
 sys.path.append(module_utils)
 from utils.dataset2 import DataGenerator2
 
 
-def get_motion_sequence(i, index, file):
+def get_audio_sequence(i, index, file):
     iFL = index[i]
     data_labels = [None] * 2
     with h5py.File(file, 'r') as f:
@@ -63,10 +67,9 @@ def main():
     path = config['test']
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
-
     train_dataset = DataGenerator2(path, config['batch_size'], config['sequence'], config['sequence_out'], 'test',
                                    config['init_step'], shuffle=True)
-    batch_0 = train_dataset[270]
+    batch_0 = train_dataset[0]
     input_encoder_shape = batch_0[0][0].shape[1:]
     input_decoder_shape = batch_0[0][0].shape[1:]
     output_shape = batch_0[1].shape[1:]
@@ -88,8 +91,10 @@ def main():
         file_list = glob.glob(os.path.join(args.folder_in, '*'))
         for file in file_list:
             with h5py.File(file, 'r') as f:
-                motion_data = f['input']
-                current_lenght = motion_data.shape[0]
+                soundPath = str(np.array(f['sound_path']))[2:-1]
+                position = f['position']
+                audio_data = f['input']
+                current_lenght = audio_data.shape[0]
                 if config['sequence'] + config['sequence_out'] >= current_lenght:
                     logging.error('The lenght of the sequence is larger thant the lenght of the file...')
                     raise ValueError('')
@@ -98,7 +103,7 @@ def main():
 
             sequence_predictions = []
             for i in range(max_size):
-                x_labels = get_motion_sequence(i, index, file)
+                x_labels = get_audio_sequence(i, index, file)
                 x_labels[0] = np.expand_dims(x_labels[0], axis=0)
                 x_labels[0] = np.expand_dims(x_labels[0], axis=-1)
                 x_labels[1] = np.expand_dims(x_labels[1], axis=0)
@@ -107,24 +112,18 @@ def main():
                 prediction = np.squeeze(prediction)
                 sequence_predictions.append(prediction[0])
 
-            file_name = file.split('/')[-1]
-            original_file = os.path.join(args.folder_in, file_name)
-            with h5py.File(original_file, 'r') as f:
-                song_name = f['song_path']
-                pos = f['position']
-                mean = f['motion_mean']
-                print('position: ', pos)
-                print('song name: ', song_name)
-                quit()
-
-            song_name = song_name.split('/')[-1]
-
             sequence_predictions = np.array(sequence_predictions)
+            sequence_predictions = reverse_motion_transform(sequence_predictions, config)
+
+            # This are entries for save.
+            # Use previous 'pos = [start_position, end_position]' parameter.
+            sound_name = soundPath.split('/')[-1]
             start_pos = config['sequence']
             end_pos = sequence_predictions.shape[0] + config['sequence_out']
 
-            os.makedirs(os.path.join(prefix, 'DANCE_' + file_name))
-            save(sequence_predictions, start_pos, end_pos, path=os.path.join(prefix, 'DANCE_' + song_name))
+            os.makedirs(os.path.join(prefix, 'DANCE_' + sound_name))
+            save(sequence_predictions, start_pos, end_pos, path=os.path.join(prefix, 'DANCE_' + sound_name))
+            quit()
 
 
 if __name__ == '__main__':
@@ -155,5 +154,7 @@ if __name__ == '__main__':
 
     with open(args.configuration, 'rb') as f:
         config = pickle.load(f)
+
+    print(config)
 
     main()

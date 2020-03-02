@@ -5,6 +5,7 @@ import glob
 import logging
 import pickle
 import matplotlib.pyplot as plt
+import numpy as np
 
 from keras.utils import plot_model
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateScheduler, TensorBoard
@@ -22,7 +23,7 @@ import sys
 
 module_network = os.getcwd().replace('bin', 'network')
 sys.path.append(module_network)
-from network.convLSTM2dMoldel import ConvLSTM2dModel
+from network.convLSTM2dMoldel2 import ConvLSTM2dModel
 
 module_utils = os.getcwd().replace('bin', 'utils')
 sys.path.append(module_utils)
@@ -59,12 +60,18 @@ def main():
                                   period=1)
     print(model.summary())
 
-    def lr_scheduler(epoch, lr):
+    '''def lr_scheduler(epoch, lr):
         decay_rate = 0.90
         decay_step = 20
         if epoch % decay_step == 0 and epoch:
             return lr * decay_rate
-        return lr
+        return lr'''
+
+    def lr_scheduler(epoch):
+        if epoch < 10:
+            return args.base_lr
+        else:
+            return args.base_lr * np.exp(0.1 * (10 - epoch))
 
     callbacks_list = [model_saver,
                       TerminateOnNaN(),
@@ -101,7 +108,8 @@ def main():
     def plot_loss(hist, save):
         # Plot training & validation loss values
         plt.plot(hist.history['loss'])
-        plt.plot(hist.history['val_loss'])
+        if 'val_loss' in hist.history.keys():
+            plt.plot(hist.history['val_loss'])
         plt.title('Model loss')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
