@@ -31,7 +31,7 @@ validation=True
 transformed=True
 final_json=True
 
-silence=10
+silence=2
 
 
 . ./local/parse_options.sh || exit 1;
@@ -62,7 +62,7 @@ if [ ${stage} -eq 0 ]; then
                     -sr ${sampling} \
                     -hl ${hop_length} \
                     -w ${wlen} \
-                    -r 0 \
+                    -r -1 30 20 \
                     -d ${dataset_master_folder} \
                     -o ${exp} \
                     -t 'train' || exit 1;
@@ -70,7 +70,7 @@ if [ ${stage} -eq 0 ]; then
                     -sr ${sampling} \
                     -hl ${hop_length} \
                     -w ${wlen} \
-                    -r 0 \
+                    -r -1 30 20 \
                     -d ${dataset_master_folder} \
                     -o ${exp} \
                     -t 'test' || exit 1;

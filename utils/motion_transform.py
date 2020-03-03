@@ -54,7 +54,9 @@ def reverse_motion_transform(motion_data, config):
 
 
 def motion_silence(motion, size):
-    silence_pos = np.ones((size, motion.shape[1]), dtype=np.float32) * motion[0, :]
+    pos = np.expand_dims(motion, axis=0)
+    silence_pos = np.repeat(pos, size, axis=0)
+    #silence_pos = np.ones((size, motion.shape[1]), dtype=np.float32) * motion[0, :]
     return silence_pos
 
 

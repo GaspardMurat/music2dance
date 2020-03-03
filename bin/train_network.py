@@ -41,6 +41,7 @@ def main():
 
     train_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step,
                                    shuffle=True)
+
     batch_0 = train_dataset[270]
     input_encoder_shape = batch_0[0][0].shape[1:]
     input_decoder_shape = batch_0[0][0].shape[1:]
@@ -51,6 +52,8 @@ def main():
         os.makedirs(folder_models)
 
     model = ConvLSTM2dModel(input_encoder_shape, output_shape, args.base_lr)
+
+    plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
     model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                   verbose=1,
@@ -71,7 +74,7 @@ def main():
         if epoch < 10:
             return args.base_lr
         else:
-            return args.base_lr * np.exp(0.1 * (10 - epoch))
+            return args.base_lr * np.exp(0.05 * (10 - epoch))
 
     callbacks_list = [model_saver,
                       TerminateOnNaN(),
@@ -102,8 +105,6 @@ def main():
 
     with open(os.path.join(args.out, 'trainHistoryDict'), 'wb') as file_pi:
         pickle.dump(history.history, file_pi)
-
-    plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
     def plot_loss(hist, save):
         # Plot training & validation loss values

@@ -3,12 +3,13 @@ from keras.layers import Input
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Conv2D, BatchNormalization, TimeDistributed, Conv2DTranspose
+from keras.layers import ConvLSTM2D
 from keras.layers import ConvLSTM2DCell
-# from keras.layers import ConvLSTM2D
+#from keras.layers import ConvRNN2D
 from keras import optimizers
 
 from .readout import ConvRNN2D_readout
-from .convolutional_recurrent import ConvLSTM2D
+from .convolutional_recurrent import ConvRNN2D
 
 
 def ConvLSTM2dModel(input_shape, output_shape, learning_rate):
@@ -45,6 +46,7 @@ def ConvLSTM2dModel(input_shape, output_shape, learning_rate):
     convLSTM_enc1_cell = ConvLSTM2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu',
                                     return_state=False, return_sequences=True)
     convLSTM_enc1 = convLSTM_enc1_cell(conv_enc3_bn)
+
     convLSTM_enc2_cell = ConvLSTM2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu',
                                     return_state=True, return_sequences=False)
     _, state_h, state_c = convLSTM_enc2_cell(convLSTM_enc1)
@@ -75,11 +77,14 @@ def ConvLSTM2dModel(input_shape, output_shape, learning_rate):
     convLSTM_dec1_Cell = ConvLSTM2DCell(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')
     convLSTM_dec1 = ConvRNN2D_readout(convLSTM_dec1_Cell, time_step_out, return_sequences=True, initial_state=encoder_states)(conv_mono_enc3_bn)
 
+    convLSTM_dec2_cell = ConvLSTM2DCell(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')
+    convLSTM_dec2 = ConvRNN2D(cell=convLSTM_dec2_cell, return_sequences=True)([convLSTM_dec1, encoder_states[0], encoder_states[1]])
+
     # Conv-Decoder
 
     conv_dec1 = TimeDistributed(
         Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='relu'))(
-        convLSTM_dec1)
+        convLSTM_dec2)
     conv_dec1 = TimeDistributed(
         Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu'))(
         conv_dec1)

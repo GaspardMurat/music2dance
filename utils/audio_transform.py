@@ -3,6 +3,7 @@ import numpy as np
 import os
 import logging
 
+import matplotlib.pyplot as plt
 
 def load_audio(path, samplingrate=44100):
     sound_path = os.path.join(path, 'audio.mp3')
@@ -15,8 +16,16 @@ def load_audio(path, samplingrate=44100):
 
 
 # TODO : to apply noise, or other transformation to audiodata, use this function after load_audio().
-def audio_augmontation(audiodata, snr):
+def audio_augmontation(audiodata, SNR_dB):
     #audiodata /= np.amax(np.abs(audiodata))
+    if SNR_dB < 0:
+        return audiodata
+    else:
+        snr = 10.0 ** (SNR_dB / 10.0)
+        p1 = audiodata.var()
+        n = p1 / snr
+        noise = np.random.randn(audiodata.shape[0]) * np.sqrt(n)
+        audiodata +=noise
     return audiodata
 
 
@@ -34,6 +43,8 @@ def sequentialize(audiodata, start_pos, end_pos, sr=44100, slice_length=1764, wl
         for x in range(0, n - 1, slice_length):
             slice = audiodata[x:slice_length + x]
             stft = librosa.feature.melspectrogram(y=slice, sr=sr, hop_length=wlen, n_mels=128)
+            #stft = librosa.stft(y=slice, hop_length=wlen)
+            stft = librosa.amplitude_to_db(np.abs(stft))
             acoustic_features.append(stft)
         acoustic_features = np.concatenate(acoustic_features, axis=1)
         return acoustic_features, True
@@ -63,8 +74,8 @@ def input_loader(data_wave, start_pos, end_pos, config):
 
 
 def audio_transform(data_audio, config):
-    audio_max = 5.
-    audio_min = -200.
+    audio_max = 80.
+    audio_min = -100.
     config['slope_wav'] = (config['rng_wav'][1] - config['rng_wav'][0]) / (audio_max - audio_min)
     config['intersec_wav'] = config['rng_wav'][1] - config['slope_wav'] * audio_max
     audiodata = data_audio * config['slope_wav'] + config['intersec_wav']
@@ -72,8 +83,15 @@ def audio_transform(data_audio, config):
 
 
 def audio_silence(config):
-    silence_wav = np.random.rand(config['silence'] * config['sampling_rate']).astype(np.float32) * (10 ** -5)
-    silence_wav /= np.amax(np.abs(silence_wav))
+    '''
+
+    :param config:
+    :return: white noise array.
+    '''
+    mean = 0
+    std = 1.10e-3
+    silence_wav = np.random.normal(mean, std, size=config['silence'] * config['sampling_rate']).astype(np.float32)
+    #silence_wav /= np.amax(np.abs(silence_wav))
     end = int(config['silence'] * config['fps'] / 2)
     silence, bool = input_loader(silence_wav, 0, end, config)
     return silence

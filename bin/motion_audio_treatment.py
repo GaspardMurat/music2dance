@@ -41,31 +41,39 @@ def main():
 
         samplingRate = config['sampling_rate']
         audio_wave, sr = load_audio(soundPath, samplingRate)
-        for snr in config['snr']:
-            transformed_audio_wave = audio_augmontation(audio_wave, snr)
-            audiodata, bool = input_loader(transformed_audio_wave, start_pos, end_pos, config)
-            if not bool:
-                print('discarded')
+        _, bool = input_loader(audio_wave, start_pos, end_pos, config)
+        if not bool:
+            print('discarded')
+            if os.path.exists(item):
                 os.remove(item)
             else:
-                audiodata = audio_transform(audiodata, config)
+                pass
+        else:
+            for snr in config['snr']:
+                transformed_audio_wave = audio_augmontation(audio_wave, snr)
+                audiodata, _ = input_loader(transformed_audio_wave, start_pos, end_pos, config)
+
                 silence_audio = audio_silence(config)
                 audiodata = np.concatenate((silence_audio, audiodata, silence_audio))
+                audiodata = audio_transform(audiodata, config)
 
-                silence_pos = motion_silence(motion, silence_audio.shape[0])
-                motion = np.concatenate((silence_pos, motion, silence_pos))
+                silence_pos_0 = motion_silence(motion[0], silence_audio.shape[0])
+                silence_pos_last = motion_silence(motion[-1], silence_audio.shape[0])
+                motion = np.concatenate((silence_pos_0, motion, silence_pos_last))
 
+                h5file = '{}f{:03d}snr{:03d}.h5'.format(os.path.join(prefix, args.type + '_'), i, snr)
+                with h5py.File(h5file, 'a') as f:
+
+                    f.create_dataset('sound_path', data=soundPath)
+                    f.create_dataset('motion', data=motion)
+                    f.create_dataset('input', data=audiodata)
+                    f.create_dataset('snr', data=snr)
+                    f.create_dataset('position', data=pos)
+
+            if os.path.exists(item):
                 os.remove(item)
-
-                for snr in config['snr']:
-                    h5file = '{}f{:03d}snr{:03d}.h5'.format(os.path.join(prefix, args.type + '_'), i, snr)
-                    with h5py.File(h5file, 'a') as f:
-
-                        f.create_dataset('sound_path', data=soundPath)
-                        f.create_dataset('motion', data=motion)
-                        f.create_dataset('input', data=audiodata)
-                        f.create_dataset('snr', data=snr)
-                        f.create_dataset('position', data=pos)
+            else:
+                pass
 
 
 if __name__ == '__main__':
