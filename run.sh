@@ -8,6 +8,7 @@ echo "running path.sh"
 # general configuration
 
 stage=-1
+mode=1
 dataset_master_folder=./dataset_master
 exp=./exp
 
@@ -107,7 +108,8 @@ if [ ${stage} -eq 2 ]; then
                    -p ${sequence_out} \
                    -vs ${validation} \
                    -m ${multiprocessing} \
-                   -w ${workers} || exit 1;
+                   -w ${workers} \
+                   -md ${mode} || exit 1;
   echo "----- End-to-End stage"
 fi
 
@@ -122,7 +124,8 @@ if [ ${stage} -eq 3 ]; then
                    -r 0 \
                    -v 1 \
                    -mu ${multiprocessing} \
-                   -w ${workers} || exit 1;
+                   -w ${workers} \
+                   -md ${mode} || exit 1;
   echo "----- End-to-End stage"
 fi
 

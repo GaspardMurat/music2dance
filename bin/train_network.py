@@ -21,14 +21,6 @@ set_session(sess)  # set this TensorFlow session as the default session for Kera
 
 import sys
 
-module_network = os.getcwd().replace('bin', 'network')
-sys.path.append(module_network)
-from network.convLSTM2dMoldel2 import ConvLSTM2dModel
-
-module_utils = os.getcwd().replace('bin', 'utils')
-sys.path.append(module_utils)
-from utils.dataset2 import DataGenerator2
-
 
 def main():
     if 'test' not in config:
@@ -39,85 +31,179 @@ def main():
     file_list = glob.glob(os.path.join(path, '*'))
     logging.info('number of h5 files: {}'.format(len(file_list)))
 
-    train_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step,
-                                   shuffle=True)
+    if mode == 0:
+        module_network = os.getcwd().replace('bin', 'network')
+        sys.path.append(module_network)
+        from network.convlstm import convlstm
 
-    batch_0 = train_dataset[270]
-    input_encoder_shape = batch_0[0][0].shape[1:]
-    input_decoder_shape = batch_0[0][0].shape[1:]
-    output_shape = batch_0[1].shape[1:]
-    folder_models = os.path.join(args.out, 'models')
+        module_utils = os.getcwd().replace('bin', 'utils')
+        sys.path.append(module_utils)
+        from utils.dataset import DataGenerator
 
-    if not os.path.exists(folder_models):
-        os.makedirs(folder_models)
+        folder_models = os.path.join(args.out, 'models')
 
-    model = ConvLSTM2dModel(input_encoder_shape, output_shape, args.base_lr)
+        train_dataset = DataGenerator(path, args.batch, args.sequence, 'train', args.init_step, shuffle=True)
+        batch_0 = train_dataset[270]
+        input_encoder_shape = batch_0[0].shape[1:]
+        output_shape = batch_0[1].shape[1]
 
-    plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
+        if not os.path.exists(folder_models):
+            os.makedirs(folder_models)
 
-    model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
-                                  verbose=1,
-                                  save_best_only=True,
-                                  save_weights_only=True,
-                                  mode='auto',
-                                  period=1)
-    print(model.summary())
+        model = convlstm(input_encoder_shape, output_shape, args.base_lr)
 
-    '''def lr_scheduler(epoch, lr):
-        decay_rate = 0.90
-        decay_step = 20
-        if epoch % decay_step == 0 and epoch:
-            return lr * decay_rate
-        return lr'''
+        plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
 
-    def lr_scheduler(epoch):
-        if epoch < 10:
-            return args.base_lr
+        model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
+                                      verbose=1,
+                                      save_best_only=True,
+                                      save_weights_only=True,
+                                      mode='auto',
+                                      period=1)
+        print(model.summary())
+
+        '''def lr_scheduler(epoch, lr):
+            decay_rate = 0.90
+            decay_step = 20
+            if epoch % decay_step == 0 and epoch:
+                return lr * decay_rate
+            return lr'''
+
+        def lr_scheduler(epoch):
+            if epoch < 10:
+                return args.base_lr
+            else:
+                return args.base_lr * np.exp(0.05 * (10 - epoch))
+
+        callbacks_list = [model_saver,
+                          TerminateOnNaN(),
+                          LearningRateScheduler(lr_scheduler, verbose=1)]
+
+        if args.validation_set:
+            validation_path = config['test']
+            test_dataset = DataGenerator(validation_path, args.batch, args.sequence, 'test', args.init_step,
+                                         shuffle=True)
+
+            history = model.fit_generator(train_dataset,
+                                          validation_data=test_dataset,
+                                          epochs=args.epochs,
+                                          use_multiprocessing=args.multiprocessing,
+                                          workers=args.workers,
+                                          callbacks=callbacks_list,
+                                          verbose=args.verbose)
         else:
-            return args.base_lr * np.exp(0.05 * (10 - epoch))
+            history = model.fit_generator(train_dataset,
+                                          epochs=args.epochs,
+                                          use_multiprocessing=args.multiprocessing,
+                                          workers=args.workers,
+                                          callbacks=callbacks_list,
+                                          verbose=args.verbose)
 
-    callbacks_list = [model_saver,
-                      TerminateOnNaN(),
-                      LearningRateScheduler(lr_scheduler, verbose=1)]
+        model.save_weights(os.path.join(args.out, 'models', 'model.h5'))
 
-    if args.validation_set:
-        validation_path = config['test']
-        test_dataset = DataGenerator2(validation_path, args.batch, args.sequence, args.sequence_out, 'test',
-                                      args.init_step,
-                                      shuffle=True)
+        with open(os.path.join(args.out, 'trainHistoryDict'), 'wb') as file_pi:
+            pickle.dump(history.history, file_pi)
 
-        history = model.fit_generator(train_dataset,
-                                      validation_data=test_dataset,
-                                      epochs=args.epochs,
-                                      use_multiprocessing=args.multiprocessing,
-                                      workers=args.workers,
-                                      callbacks=callbacks_list,
-                                      verbose=args.verbose)
-    else:
-        history = model.fit_generator(train_dataset,
-                                      epochs=args.epochs,
-                                      use_multiprocessing=args.multiprocessing,
-                                      workers=args.workers,
-                                      callbacks=callbacks_list,
-                                      verbose=args.verbose)
+        def plot_loss(hist, save):
+            # Plot training & validation loss values
+            plt.plot(hist.history['loss'])
+            if 'val_loss' in hist.history.keys():
+                plt.plot(hist.history['val_loss'])
+            plt.title('Model loss')
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Test'], loc='upper left')
+            plt.savefig(os.path.join(save, 'loss_values.png'))
 
-    model.save_weights(os.path.join(args.out, 'models', 'model.h5'))
+        plot_loss(history, args.out)
 
-    with open(os.path.join(args.out, 'trainHistoryDict'), 'wb') as file_pi:
-        pickle.dump(history.history, file_pi)
+    elif mode == 1:
+        module_network = os.getcwd().replace('bin', 'network')
+        sys.path.append(module_network)
+        from network.convLSTM2dMoldel2 import ConvLSTM2dModel
 
-    def plot_loss(hist, save):
-        # Plot training & validation loss values
-        plt.plot(hist.history['loss'])
-        if 'val_loss' in hist.history.keys():
-            plt.plot(hist.history['val_loss'])
-        plt.title('Model loss')
-        plt.ylabel('Loss')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Test'], loc='upper left')
-        plt.savefig(os.path.join(save, 'loss_values.png'))
+        module_utils = os.getcwd().replace('bin', 'utils')
+        sys.path.append(module_utils)
+        from utils.dataset2 import DataGenerator2
 
-    plot_loss(history, args.out)
+        train_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step,
+                                       shuffle=True)
+
+        batch_0 = train_dataset[270]
+        input_encoder_shape = batch_0[0][0].shape[1:]
+        input_decoder_shape = batch_0[0][0].shape[1:]
+        output_shape = batch_0[1].shape[1:]
+
+        folder_models = os.path.join(args.out, 'models')
+        if not os.path.exists(folder_models):
+            os.makedirs(folder_models)
+
+        model = ConvLSTM2dModel(input_encoder_shape, output_shape, args.base_lr)
+
+        plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
+
+        model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
+                                      verbose=1,
+                                      save_best_only=True,
+                                      save_weights_only=True,
+                                      mode='auto',
+                                      period=1)
+        print(model.summary())
+
+        '''def lr_scheduler(epoch, lr):
+            decay_rate = 0.90
+            decay_step = 20
+            if epoch % decay_step == 0 and epoch:
+                return lr * decay_rate
+            return lr'''
+
+        def lr_scheduler(epoch):
+            if epoch < 10:
+                return args.base_lr
+            else:
+                return args.base_lr * np.exp(0.1 * (10 - epoch))
+
+        callbacks_list = [model_saver,
+                          TerminateOnNaN(),
+                          LearningRateScheduler(lr_scheduler, verbose=1)]
+
+        if args.validation_set:
+            validation_path = config['test']
+            test_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step,
+                                       shuffle=True)
+
+            history = model.fit_generator(train_dataset,
+                                          validation_data=test_dataset,
+                                          epochs=args.epochs,
+                                          use_multiprocessing=args.multiprocessing,
+                                          workers=args.workers,
+                                          callbacks=callbacks_list,
+                                          verbose=args.verbose)
+        else:
+            history = model.fit_generator(train_dataset,
+                                          epochs=args.epochs,
+                                          use_multiprocessing=args.multiprocessing,
+                                          workers=args.workers,
+                                          callbacks=callbacks_list,
+                                          verbose=args.verbose)
+
+        model.save_weights(os.path.join(args.out, 'models', 'model.h5'))
+
+        with open(os.path.join(args.out, 'trainHistoryDict'), 'wb') as file_pi:
+            pickle.dump(history.history, file_pi)
+
+        def plot_loss(hist, save):
+            # Plot training & validation loss values
+            plt.plot(hist.history['loss'])
+            if 'val_loss' in hist.history.keys():
+                plt.plot(hist.history['val_loss'])
+            plt.title('Model loss')
+            plt.ylabel('Loss')
+            plt.xlabel('Epoch')
+            plt.legend(['Train', 'Test'], loc='upper left')
+            plt.savefig(os.path.join(save, 'loss_values.png'))
+
+        plot_loss(history, args.out)
 
 
 if __name__ == '__main__':
@@ -155,6 +241,8 @@ if __name__ == '__main__':
                         help='nb of workers', default=1)
     parser.add_argument('--validation_set', '-vs', type=str,
                         help='Use of validation set or not', default=False)
+    parser.add_argument('--mode', '-md', type=int,
+                        help='model and dataset', default=1)
 
     args = parser.parse_args()
 
@@ -169,5 +257,7 @@ if __name__ == '__main__':
 
     with open(os.path.join(args.folder, 'configuration.pickle'), "wb") as f:
         pickle.dump(config, f)
+
+    mode = 0
 
     main()
