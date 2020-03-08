@@ -13,6 +13,7 @@ from keras import constraints
 from keras.layers.recurrent import _generate_dropout_mask
 from keras.layers.recurrent import _standardize_args
 
+
 import numpy as np
 import warnings
 from keras.engine.base_layer import InputSpec, Layer
@@ -281,6 +282,8 @@ class ConvRNN2D(RNN):
             return [initial_state]
 
     def __call__(self, inputs, initial_state=None, constants=None, **kwargs):
+        '''inputs, initial_state, constants = _standardize_args(
+            inputs, initial_state, constants, self._num_constants)'''
 
         if initial_state is None and constants is None:
             return super(ConvRNN2D, self).__call__(inputs, **kwargs)
@@ -627,7 +630,7 @@ class ConvLSTM2DCell(Layer):
             constraint=self.recurrent_constraint)
         if self.use_bias:
             if self.unit_forget_bias:
-
+                @K.eager
                 def bias_initializer(_, *args, **kwargs):
                     return K.concatenate([
                         self.bias_initializer((self.filters,), *args, **kwargs),

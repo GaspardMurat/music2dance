@@ -5,11 +5,15 @@ import glob
 import logging
 import pickle
 import matplotlib.pyplot as plt
+from time import time
 import numpy as np
 
 from keras.utils import plot_model
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN, LearningRateScheduler, TensorBoard
 from keras.backend.tensorflow_backend import set_session
+from keras import optimizers
+from keras import losses
+
 import tensorflow as tf
 
 config = tf.ConfigProto()
@@ -34,7 +38,8 @@ def main():
     if mode == 0:
         module_network = os.getcwd().replace('bin', 'network')
         sys.path.append(module_network)
-        from network.convlstm import convlstm
+        from network.convlstm import AudioFeat
+        from network.convlstm import Music2dance
 
         module_utils = os.getcwd().replace('bin', 'utils')
         sys.path.append(module_utils)
@@ -44,15 +49,22 @@ def main():
 
         train_dataset = DataGenerator(path, args.batch, args.sequence, 'train', args.init_step, shuffle=True)
         batch_0 = train_dataset[270]
-        input_encoder_shape = batch_0[0].shape[1:]
-        output_shape = batch_0[1].shape[1]
+        input_encoder_shape = batch_0[0][0].shape[1:]
+        output_shape = batch_0[1][1].shape[1]
 
         if not os.path.exists(folder_models):
             os.makedirs(folder_models)
+            os.makedirs(os.path.join(folder_models, 'logs'))
 
-        model = convlstm(input_encoder_shape, output_shape, args.base_lr)
+        model = Music2dance(input_encoder_shape, output_shape, feat_dim=60, units=100, batchsize=args.batch)
+        model.build(batch_0[0][0].shape)
+        model._set_inputs(inputs=batch_0[0], outputs=model.outputs, training=None)
+        optimizer = optimizers.adam(lr=args.base_lr)
+        model.compile(loss=losses.mean_squared_error, optimizer=optimizer)
 
-        plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
+
+        #plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
+        #print(model.summary())
 
         model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                       verbose=1,
@@ -60,7 +72,6 @@ def main():
                                       save_weights_only=True,
                                       mode='auto',
                                       period=1)
-        print(model.summary())
 
         '''def lr_scheduler(epoch, lr):
             decay_rate = 0.90
@@ -75,9 +86,13 @@ def main():
             else:
                 return args.base_lr * np.exp(0.05 * (10 - epoch))
 
+        logs = os.path.join(folder_models, 'logs/{}'.format(time()))
+        tensorboard = TensorBoard(log_dir=logs)
+
         callbacks_list = [model_saver,
                           TerminateOnNaN(),
-                          LearningRateScheduler(lr_scheduler, verbose=1)]
+                          LearningRateScheduler(lr_scheduler, verbose=1),
+                          tensorboard]
 
         if args.validation_set:
             validation_path = config['test']
@@ -118,6 +133,7 @@ def main():
         plot_loss(history, args.out)
 
     elif mode == 1:
+
         module_network = os.getcwd().replace('bin', 'network')
         sys.path.append(module_network)
         from network.convLSTM2dMoldel2 import ConvLSTM2dModel
@@ -148,6 +164,9 @@ def main():
                                       save_weights_only=True,
                                       mode='auto',
                                       period=1)
+        output_names = model.output_names
+        print(output_names)
+        quit()
         print(model.summary())
 
         '''def lr_scheduler(epoch, lr):
@@ -258,6 +277,6 @@ if __name__ == '__main__':
     with open(os.path.join(args.folder, 'configuration.pickle'), "wb") as f:
         pickle.dump(config, f)
 
-    mode = 0
+    mode = args.mode
 
     main()

@@ -63,7 +63,7 @@ if [ ${stage} -eq 0 ]; then
                     -sr ${sampling} \
                     -hl ${hop_length} \
                     -w ${wlen} \
-                    -r -1 30 20 \
+                    -r -1 20 \
                     -d ${dataset_master_folder} \
                     -o ${exp} \
                     -t 'train' || exit 1;
@@ -71,7 +71,7 @@ if [ ${stage} -eq 0 ]; then
                     -sr ${sampling} \
                     -hl ${hop_length} \
                     -w ${wlen} \
-                    -r -1 30 20 \
+                    -r -1 20 \
                     -d ${dataset_master_folder} \
                     -o ${exp} \
                     -t 'test' || exit 1;

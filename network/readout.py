@@ -110,7 +110,6 @@ class ConvRNN2D_readout(RNN):
         self._num_constants = None
 
     def compute_output_shape(self, input_shape):
-        print('======== yes ========')
 
         if isinstance(input_shape, list):
             input_shape = input_shape[0]
@@ -119,11 +118,9 @@ class ConvRNN2D_readout(RNN):
 
         cell = self.cell
         if cell.data_format == 'channels_first':
-            print('Channels first.')
             rows = input_shape[2]
             cols = input_shape[3]
         elif cell.data_format == 'channels_last':
-            print('Channnels last.')
             rows = input_shape[1]
             cols = input_shape[2]
         rows = conv_utils.conv_output_length(rows,
@@ -139,12 +136,10 @@ class ConvRNN2D_readout(RNN):
 
         output_shape = input_shape[:1] + (self.output_dim, rows, cols, cell.filters)
         output_shape = transpose_shape(output_shape, cell.data_format, spatial_axes=(2, 3))
-        print('output shape 1: ', output_shape)
 
         if not self.return_sequences:
             output_shape = output_shape[:1] + output_shape[2:]
 
-        print('output shape 2: ', output_shape)
         return output_shape
 
     def build(self, input_shape):
@@ -249,7 +244,7 @@ class ConvRNN2D_readout(RNN):
             kwargs['training'] = training
 
         def step(inputs, states):
-            return self.cell.call(inputs, states, )
+            return self.cell.call(inputs, states)
 
         uses_learning_phase = False
 

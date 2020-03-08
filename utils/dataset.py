@@ -64,33 +64,32 @@ class DataGenerator(keras.utils.Sequence, ABC):
     def __len__(self):
         return int(np.floor(len(self.idxs) / self.batch_size))
 
-    # TODO: change get_example, get_item for output sequence
-
     def get_example(self, i):
         iDB, iFL = self.idxs[i]
         data_labels = [None] * 3
         with h5py.File(self.list_file[iDB], 'r') as f:
             data_labels[0] = f[self._inputs[0]][iFL: iFL + self.sequence][None, :]
             if self.init_step == 0:
-                data_labels[1] = np.zeros((1, self._dims[1][0]), dtype=np.float32)
+                data_labels[1] = np.zeros((1, 71), dtype=np.float32)  # TODO(nelson): to variable size
             else:
-                data_labels[1] = f[self._inputs[0]][iFL + self.sequence: iFL + self.sequence + self.steps]
-
+                data_labels[1] = f[self._inputs[1]][iFL: iFL + self.steps]
             data_labels[2] = f[self._inputs[1]][iFL + self.steps: iFL + self.steps + self.sequence][None, :]
         return data_labels
 
     def __getitem__(self, index):
-        X = np.empty((self.batch_size, self.sequence, *self._dims[0], self.n_channels))
-        y = np.empty((self.batch_size, *self._dims[1]))
+        X_seq = np.empty((self.batch_size, self.sequence, self.n_channels, *self._dims[0]))
+        context = np.empty((self.batch_size, *self._dims[1]))
+        y = np.empty((self.batch_size, self.sequence, *self._dims[1]))
         for i in range(index, index + self.batch_size):
             example = self.get_example(i)
             t = i - index
-            input = np.expand_dims(np.squeeze(example[0]), axis=3)
-            output = np.squeeze(example[2])[-1]
-            X[t] = input
+            input = np.expand_dims(np.squeeze(example[0]), axis=1)
+            ctxt = example[1][0]
+            output = example[2][0]
+            X_seq[t] = input
+            context[t] = ctxt
             y[t] = output
-
-        return X, y
+        return [X_seq, ctxt], y
 
 
     def on_epoch_end(self):

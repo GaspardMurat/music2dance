@@ -1,64 +1,125 @@
+import keras
 from keras.models import Model
 from keras.layers import Input
 from keras.layers import Dense
-from keras.layers import Flatten
-from keras.layers import Conv2D, BatchNormalization, TimeDistributed, Conv2DTranspose
-from keras.layers import ConvLSTM2D
-from keras import optimizers
+from keras.layers import Conv2D, BatchNormalization
+from keras.layers import LSTM
+
+import keras.backend as K
 
 
-# TODO: to modify !
+class AudioFeat(Model):
 
-def convlstm(input_shape, output_shape, learning_rate):
-    time_step = input_shape[0]
-    height = input_shape[1]
-    width = input_shape[2]
-    depth = input_shape[3]
+    def __init__(self, dim, name='Audiofeat', **kwargs):
+        super(AudioFeat, self).__init__(name='Audiofeat', **kwargs)
+        self.conv1 = Conv2D(filters=12, kernel_size=(33, 3), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv1bn = BatchNormalization()
+        self.conv2 = Conv2D(filters=24, kernel_size=(33, 3), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv2bn = BatchNormalization()
+        self.conv3 = Conv2D(filters=48, kernel_size=(33, 2), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv3bn = BatchNormalization()
+        self.conv4 = Conv2D(filters=dim, kernel_size=(32, 2), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv4bn = BatchNormalization()
 
-    main_input = Input(shape=(time_step, height, width, depth), name='main_input')
+    def call(self, inputs, mask=None):
+        feats1 = self.conv1bn(self.conv1(inputs))
+        feats2 = self.conv2bn(self.conv2(feats1))
+        feats3 = self.conv3bn(self.conv3(feats2))
+        feats = self.conv4bn(self.conv4(feats3))
+        feats = K.squeeze(feats, axis=-1)
+        return feats
 
-    # Encoder
-    conv_enc1 = TimeDistributed(
-        Conv2D(filters=8, kernel_size=(6, 4), strides=(4, 1), padding='same', activation='relu'))(main_input)
-    conv_enc1_bn = TimeDistributed(BatchNormalization(axis=-1))(conv_enc1)
 
-    conv_enc2 = TimeDistributed(
-        Conv2D(filters=16, kernel_size=(3, 3), strides=(2, 1), padding='same', activation='relu'))(conv_enc1_bn)
-    conv_enc2_bn = TimeDistributed(BatchNormalization(axis=-1))(conv_enc2)
+class Music2dance(keras.Model):
 
-    conv_enc3 = TimeDistributed(
-        Conv2D(filters=16, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='relu'))(conv_enc2_bn)
-    conv_enc3_bn = TimeDistributed(BatchNormalization(axis=-1))(conv_enc3)
+    def __init__(self, input_shape, skeleton_dim, feat_dim, units,
+                 batchsize,
+                 name='Music2dance',
+                 **kwargs):
+        super(Music2dance, self).__init__(name=name, **kwargs)
+        self.batchsize = batchsize
+        self.time_step = input_shape[0]
+        self.height = input_shape[1]
+        self.width = input_shape[2]
+        self.depth = input_shape[3]
+        self.skeleton_dim = skeleton_dim
 
-    convLSTM_enc1 = ConvLSTM2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same',
-                                    activation='relu', return_sequences=True)(conv_enc3)
-    convLSTM_enc2 = ConvLSTM2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same',
-                               activation='relu', return_sequences=True)(convLSTM_enc1)
-    convLSTM_enc2_bn = BatchNormalization()(convLSTM_enc2)
+        self.conv1 = Conv2D(filters=12, kernel_size=(33, 3), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv1_bn = BatchNormalization()
+        self.conv2 = Conv2D(filters=24, kernel_size=(33, 3), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv2bn = BatchNormalization()
+        self.conv3 = Conv2D(filters=48, kernel_size=(33, 2), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv3bn = BatchNormalization()
+        self.conv4 = Conv2D(filters=feat_dim, kernel_size=(32, 2), strides=(1, 1), padding='valid',
+                            data_format='channels_first',
+                            activation='elu')
+        self.conv4bn = BatchNormalization()
 
-    convLSTM_dec1 = ConvLSTM2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same',
-                               activation='relu', return_sequences=True)(convLSTM_enc2_bn)
-    convLSTM_dec2 = ConvLSTM2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='same',
-                               activation='relu', return_sequences=False)(convLSTM_dec1)
-    convLSTM_dec2_bn = BatchNormalization()(convLSTM_dec2)
+        self.enc_lstm1 = LSTM(units, activation='elu', return_sequences=True, return_state=False)
+        self.enc_lstm2 = LSTM(units, activation='elu', return_sequences=True, return_state=False)
+        self.enc_lstm3 = LSTM(units, activation='elu', return_sequences=False, return_state=False)
+        self.fc0 = Dense(feat_dim, activation='elu')
+        self.dec_lstm1 = LSTM(units, activation='elu', return_sequences=True, return_state=False)
+        self.dec_lstm2 = LSTM(units, activation='elu', return_sequences=True, return_state=False)
+        self.dec_lstm3 = LSTM(units, activation='elu', return_sequences=False, return_state=False)
+        self.signal_out = Dense(skeleton_dim, activation='elu')
 
-    conv_dec1 = Conv2D(filters=48, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='relu')(convLSTM_dec2_bn)
-    conv_dec1_bn = BatchNormalization()(conv_dec1)
+        self.inputs1 = Input(
+            batch_shape=(self.batchsize, self.time_step, self.height, self.width, self.depth))
+        self.inputs2 = Input(batch_shape=(self.batchsize, self.skeleton_dim))
+        self.outputs = self.compute_outputs([self.inputs1, self.inputs2])
 
-    conv_dec2 = Conv2D(filters=64, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='relu')(
-        conv_dec1_bn)
-    conv_dec2_bn = BatchNormalization()(conv_dec2)
+    def call(self, inputs):
+        audio_input = inputs[0]
+        context = inputs[1]
+        batchsize, sequence = audio_input.shape[0:2]
+        outputs_list = []
+        for i in range(sequence):
+            h = self.audiofeat(audio_input[:, i])
+            y = self.forward(context, h)
+            context = y
+            outputs_list.append(context)
+        outputs = K.stack(outputs_list, axis=1)
+        return outputs
 
-    conv_dec3 = Conv2D(filters=69, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='relu')(
-        conv_dec2_bn)
-    conv_dec3_bn = BatchNormalization()(conv_dec3)
+    def forward(self, h1, h, eval=False):
+        # TODO: change dims of h (before and after concat).
+        enc1 = self.enc_lstm1(h)
+        enc2 = self.enc_lstm2(enc1)
+        enc3 = self.enc_lstm3(enc2)
+        _h = self.fc0(enc3)
+        h = K.concatenate([h1, _h])
+        h = K.expand_dims(h, axis=-1)
+        dec1 = self.dec_lstm1(h)
+        dec2 = self.dec_lstm2(dec1)
+        dec3 = self.dec_lstm3(dec2)
+        h = self.signal_out(dec3)
+        if eval:
+            return _h, h
+        return h
 
-    x = Flatten()(conv_dec3_bn)
-    main_output = Dense(output_shape, name='main_output')(x)
+    def audiofeat(self, inputs):
+        feats1 = self.conv1_bn(self.conv1(inputs))
+        feats2 = self.conv2bn(self.conv2(feats1))
+        feats3 = self.conv3bn(self.conv3(feats2))
+        feats = self.conv4bn(self.conv4(feats3))
+        feats = K.squeeze(feats, axis=-1)
+        return feats
 
-    model = Model(inputs=main_input, outputs=main_output)
-
-    optimizer = optimizers.adam(lr=learning_rate)
-    model.compile(loss='mse', optimizer=optimizer, metrics=['mae', 'mse'])
-
-    return model
+    def compute_outputs(self, inputs):
+        outputs = self.call(inputs)
+        return outputs
