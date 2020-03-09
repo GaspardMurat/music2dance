@@ -82,7 +82,7 @@ def ConvLSTM2dModel(input_shape, output_shape, learning_rate):
 
     # Conv-Decoder
 
-    '''conv_dec1 = TimeDistributed(
+    conv_dec1 = TimeDistributed(
         Conv2DTranspose(filters=32, kernel_size=(3, 3), strides=(2, 2), padding='same', activation='elu'))(
         convLSTM_dec2)
     conv_dec1 = TimeDistributed(
@@ -104,10 +104,10 @@ def ConvLSTM2dModel(input_shape, output_shape, learning_rate):
     conv_dec3 = TimeDistributed(
         Conv2DTranspose(filters=8, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='elu'))(
         conv_dec3)
-    conv_dec3_bn = TimeDistributed(BatchNormalization(axis=-1))(conv_dec3)'''
+    conv_dec3_bn = TimeDistributed(BatchNormalization(axis=-1))(conv_dec3)
 
-    flat = TimeDistributed(Flatten())(convLSTM_dec2)
-    decoder_outputs = TimeDistributed(Dense(output_dim))(flat)
+    flat = TimeDistributed(Flatten())(conv_dec3_bn)
+    decoder_outputs = TimeDistributed(Dense(output_dim, activation='elu'))(flat)
 
     # Model compile
 

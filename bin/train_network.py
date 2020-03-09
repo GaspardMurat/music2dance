@@ -147,7 +147,7 @@ def main():
 
         batch_0 = train_dataset[270]
         input_encoder_shape = batch_0[0][0].shape[1:]
-        input_decoder_shape = batch_0[0][0].shape[1:]
+        input_decoder_shape = batch_0[0][1].shape[1:]
         output_shape = batch_0[1].shape[1:]
 
         folder_models = os.path.join(args.out, 'models')
@@ -186,7 +186,7 @@ def main():
 
         if args.validation_set:
             validation_path = config['test']
-            test_dataset = DataGenerator2(path, args.batch, args.sequence, args.sequence_out, 'train', args.init_step,
+            test_dataset = DataGenerator2(validation_path, args.batch, args.sequence, args.sequence_out, 'test', args.init_step,
                                        shuffle=True)
 
             history = model.fit_generator(train_dataset,

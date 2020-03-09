@@ -114,8 +114,6 @@ class ConvRNN2D_readout(RNN):
         if isinstance(input_shape, list):
             input_shape = input_shape[0]
 
-        print('input_shape: ', input_shape)
-
         cell = self.cell
         if cell.data_format == 'channels_first':
             rows = input_shape[2]
