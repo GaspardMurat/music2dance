@@ -89,7 +89,7 @@ class DataGenerator(keras.utils.Sequence, ABC):
             X_seq[t] = input
             context[t] = ctxt
             y[t] = output
-        return [X_seq, ctxt], y
+        return [X_seq, context], y
 
 
     def on_epoch_end(self):

@@ -58,13 +58,13 @@ def main():
 
         model = Music2dance(input_encoder_shape, output_shape, feat_dim=60, units=100, batchsize=args.batch)
         model.build(batch_0[0][0].shape)
-        model._set_inputs(inputs=batch_0[0], outputs=model.outputs, training=None)
+        model._set_inputs(inputs=batch_0[0])
         optimizer = optimizers.adam(lr=args.base_lr)
         model.compile(loss=losses.mean_squared_error, optimizer=optimizer)
 
 
         #plot_model(model, show_layer_names=True, show_shapes=True, to_file=os.path.join(args.out, 'model.png'))
-        #print(model.summary())
+        print(model.summary())
 
         model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                       verbose=1,
@@ -164,9 +164,7 @@ def main():
                                       save_weights_only=True,
                                       mode='auto',
                                       period=1)
-        output_names = model.output_names
-        print(output_names)
-        quit()
+
         print(model.summary())
 
         '''def lr_scheduler(epoch, lr):

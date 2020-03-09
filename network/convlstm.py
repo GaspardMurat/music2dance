@@ -2,7 +2,7 @@ import keras
 from keras.models import Model
 from keras.layers import Input
 from keras.layers import Dense
-from keras.layers import Conv2D, BatchNormalization
+from keras.layers import Conv2D, BatchNormalization, TimeDistributed
 from keras.layers import LSTM
 
 import keras.backend as K
@@ -77,11 +77,12 @@ class Music2dance(keras.Model):
         self.dec_lstm2 = LSTM(units, activation='elu', return_sequences=True, return_state=False)
         self.dec_lstm3 = LSTM(units, activation='elu', return_sequences=False, return_state=False)
         self.signal_out = Dense(skeleton_dim, activation='elu')
+        self.out = TimeDistributed(Dense(skeleton_dim))
 
         self.inputs1 = Input(
             batch_shape=(self.batchsize, self.time_step, self.height, self.width, self.depth))
         self.inputs2 = Input(batch_shape=(self.batchsize, self.skeleton_dim))
-        self.outputs = self.compute_outputs([self.inputs1, self.inputs2])
+        #self.outputs = self.compute_outputs([self.inputs1, self.inputs2])
 
     def call(self, inputs):
         audio_input = inputs[0]
@@ -93,7 +94,8 @@ class Music2dance(keras.Model):
             y = self.forward(context, h)
             context = y
             outputs_list.append(context)
-        outputs = K.stack(outputs_list, axis=1)
+        outputs = K.stack(outputs_list, axis=1) # Because K.stack in not a keras layer, call does not return a trainable outputs...
+        outputs = self.out(outputs)
         return outputs
 
     def forward(self, h1, h, eval=False):
