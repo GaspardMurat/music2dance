@@ -68,7 +68,7 @@ def main():
 
         model_saver = ModelCheckpoint(filepath=os.path.join(folder_models, 'model.ckpt.{epoch:04d}.hdf5'),
                                       verbose=1,
-                                      save_best_only=True,
+                                      save_best_only=False,
                                       save_weights_only=True,
                                       mode='auto',
                                       period=1)
